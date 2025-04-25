@@ -537,7 +537,7 @@ export default function HomePage() {
     return (
       <div className={styles.pageContainer}>
         <div className={styles.authContainer}>
-          <h1 className={styles.authTitle}>Interactive Fairy Tale</h1>
+          <h1 className={styles.authTitle}>Taleon</h1>
           
           <form onSubmit={handleLogin} className={styles.authForm}>
             {authError && <p className={styles.authError}>{authError}</p>}
@@ -582,7 +582,7 @@ export default function HomePage() {
     <div className={styles.pageContainer}>
       <div className={`${styles.bookContainer} ${debugPanelVisible ? styles.withDebugPanel : ''}`}>
         <div className={styles.headerArea}>
-          <h1 className={styles.title}>Interactive Fairy Tale</h1>
+          <h1 className={styles.title}>Taleon</h1>
           
           <div className={styles.navButtons}>
             {viewState !== 'storySelect' && (

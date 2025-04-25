@@ -358,7 +358,7 @@ export default function AdminPage() {
   return (
     <div className={styles.adminContainer}>
       <header className={styles.adminHeader}>
-        <h1>Fairy Tale Admin Panel</h1>
+        <h1>Taleon Admin Panel</h1>
         <div className={styles.adminNav}>
           <button 
             className={`${styles.navButton} ${activeView === 'baseStories' ? styles.active : ''}`} 
