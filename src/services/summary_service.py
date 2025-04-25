@@ -177,12 +177,12 @@ Follow these clear rules for each field:
    - Identify only the central figure (not a side character)
    - Use the character's full name as provided in the text
 
-4. **m_character_trait**: 
+4. **main_character_trait**: 
    - Extract the dominant character trait
    - Use concise description (not a lengthy explanation)
    - Express in the detected language
 
-5. **m_character_wish**: 
+5. **main_character_wish**: 
    - Identify the inner desire or emotional goal (not external objective)
    - Express in the detected language
 
@@ -251,8 +251,8 @@ Before submitting your response, verify:
   "original_tale_context": "Eine Version von Rotkäppchen, in der ein junges Mädchen ihre kranke Großmutter besucht, während sie von einem Wolf im verzauberten Wald verfolgt wird",
   "tale_id": "P-001",
   "main_character": "Rotkäppchen",
-  "m_character_trait": "freundlich zu Tieren",
-  "m_character_wish": "ihrer Großmutter Trost zu bringen",
+  "main_character_trait": "freundlich zu Tieren",
+  "main_character_wish": "ihrer Großmutter Trost zu bringen",
   "side_character": [
     {
       "name": "Wolf",
@@ -282,8 +282,8 @@ Before submitting your response, verify:
   "original_tale_context": "Une version du Petit Chaperon Rouge où une jeune fille rend visite à sa grand-mère malade tout en étant suivie par un loup dans une forêt enchantée",
   "tale_id": "P-001",
   "main_character": "Petit Chaperon Rouge",
-  "m_character_trait": "gentille envers les animaux",
-  "m_character_wish": "apporter du réconfort à sa grand-mère",
+  "main_character_trait": "gentille envers les animaux",
+  "main_character_wish": "apporter du réconfort à sa grand-mère",
   "side_character": [
     {
       "name": "Loup",
@@ -542,8 +542,8 @@ Updated Summary:"""
             ("initial_task", "initial_task"),
             ("obstacle", "obstacle"),
             ("reward", "reward"),
-            ("m_character_trait", "main_character_trait"),
-            ("m_character_wish", "main_character_wish"),
+            ("main_character_trait", "main_character_trait"),
+            ("main_character_wish", "main_character_wish"),
             ("cliffhanger_situation", "cliffhanger_situation")
         ]
         
