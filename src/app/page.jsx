@@ -53,7 +53,8 @@ const AVAILABLE_MODELS = {
     { id: "microsoft/mai-ds-r1:free", name: "Microsoft MAI DS R1" },
     { id: "nvidia/llama-3.1-nemotron-ultra-253b-v1:free", name: "Nvidia Nemotron 253b" },
     { id: "google/gemma-3-27b-it:free", name: "Gemma 3 27b" },
-    { id: "meta-llama/llama-3.3-70b-instruct:free", name: "Llama 3.3 70b" }
+    { id: "meta-llama/llama-3.3-70b-instruct:free", name: "Llama 3.3 70b" },
+    { id: "google/gemini-2.5-flash-preview", name: "!!ACHTUNG KOSTET GELD!!! Gemini 2.5 Flash" },
   ],
   summary: [
     { id: "mistralai/mistral-small-3.1-24b-instruct:free", name: "Mistral Small 24b" },
