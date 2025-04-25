@@ -6,8 +6,4 @@ httpx==0.25.2
 sqlalchemy==2.0.23
 passlib==1.7.4
 bcrypt==4.0.1
-sentence-transformers==2.2.2
-chromadb==0.4.18
-python-multipart==0.0.6
-aiofiles==23.2.1
 starlette==0.27.0
