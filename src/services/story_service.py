@@ -149,9 +149,13 @@ class StoryService:
             prompt_history = current_summary
         else:
             prompt_history = history[-MAX_HISTORY_FOR_PROMPT:] if len(history) > MAX_HISTORY_FOR_PROMPT else history
+        
+        summary = None
+        if len(history) > MAX_HISTORY_FOR_PROMPT:
+            summary = current_summary
         # Format user prompt with the history
         user_prompt = f"""Recent Interaction History:
-{'[Start of History]' if len(history) <= MAX_HISTORY_FOR_PROMPT else '[... earlier history summarized ...]'}
+{'[Start of History]' if len(history) <= MAX_HISTORY_FOR_PROMPT else f'[current summary]: {summary} [last interactions]: '}
 {prompt_history if len(history) == 1 else chr(10).join(prompt_history) }
 
 (The user's most recent action is the last message in the history above)
