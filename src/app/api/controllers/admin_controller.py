@@ -257,15 +257,9 @@ async def admin_update_base_story(story_id: str, request: BaseStoryRequest):
     
     try:
         # Get the base story
-        base_story = get_base_story(story_id)
-        if not base_story:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Base story with ID {story_id} not found"
-            )
-        
         # Update the story
         with get_db() as db:
+            base_story = db.query(BaseStory).filter(BaseStory.id == story_id).first()
             base_story.title = request.title
             base_story.description = request.description
             base_story.original_tale_context = request.original_tale_context
