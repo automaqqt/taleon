@@ -251,10 +251,9 @@ async def admin_delete_base_story_endpoint(story_id: str): # Renamed, removed au
         )
 
 @router.put("/admin/base-stories/{story_id}", response_model=Dict[str, Any])
-async def admin_update_base_story(story_id: str, request: BaseStoryRequest, auth: AuthRequest):
+async def admin_update_base_story(story_id: str, request: BaseStoryRequest):
     """Updates an existing base story (admin only)"""
     # Authenticate admin
-    admin_user = await admin_only(auth)
     
     try:
         # Get the base story
