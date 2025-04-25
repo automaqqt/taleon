@@ -5,7 +5,6 @@ import os
 from .controllers.story_controller import router as story_router
 from .controllers.admin_controller import router as admin_router
 from ...database.db_utils import init_db
-from ...core.config import settings
 
 # Initialize the database
 init_db()
@@ -18,10 +17,13 @@ app = FastAPI(
 )
 
 # Configure CORS
+origins = [
+        "https://edudash.vidsoft.net",
+    ]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origins,
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
