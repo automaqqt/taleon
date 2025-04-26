@@ -45,15 +45,19 @@ const DEFAULT_SYSTEM_PROMPTS = {
 const AVAILABLE_MODELS = {
   story: [
     { id: "google/gemini-2.0-flash-exp:free", name: "Gemini 2.0 Flash" },
-    { id: "google/gemini-2.5-pro-exp-03-25:free", name: "Gemini 2.5 Pro" },
+    { id: "google/gemini-2.5-pro-exp-03-25", name: "Gemini 2.5 Pro" },
     { id: "deepseek/deepseek-chat-v3-0324:free", name: "Deepseek V3" },
     { id: "deepseek/deepseek-r1:free", name: "Deepseek R1" },
+    { id: "deepseek/deepseek-r1-distill-llama-70b:free", name: "Deepseek R1 Distill Llama70b" },
+    { id: "google/gemma-3-27b-it:free", name: "Gemma 3 27b" },
+    { id: "meta-llama/llama-4-maverick:free", name: "Llama 4 Maverick" },
+    { id: "meta-llama/llama-3.3-70b-instruct:free", name: "Llama 3.3 70b" },
+    { id: "thudm/glm-z1-32b:free", name: "GLM Z1 32b" },
+    { id: "thudm/glm-4-32b:free", name: "GLM 4 32b" },
     { id: "rekaai/reka-flash-3:free", name: "Reka Flash 3" },
     { id: "mistralai/mistral-small-3.1-24b-instruct:free", name: "Mistral Small 24b" },
     { id: "microsoft/mai-ds-r1:free", name: "Microsoft MAI DS R1" },
     { id: "nvidia/llama-3.1-nemotron-ultra-253b-v1:free", name: "Nvidia Nemotron 253b" },
-    { id: "google/gemma-3-27b-it:free", name: "Gemma 3 27b" },
-    { id: "meta-llama/llama-3.3-70b-instruct:free", name: "Llama 3.3 70b" },
     { id: "google/gemini-2.5-flash-preview", name: "!!ACHTUNG KOSTET GELD!!! Gemini 2.5 Flash" },
   ],
   summary: [

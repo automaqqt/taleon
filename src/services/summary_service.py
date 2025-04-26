@@ -145,8 +145,7 @@ You are a precise multilingual fairy tale analyst. Your task is to extract speci
 Return ONLY the following JSON structure without any introduction, commentary, or additional text:
 
 {
-  "original_tale_context": "string (concise summary of the original fairy tale context, max 150 words)",
-  "tale_id": "string (e.g., 'P-050')",
+  "original_tale_context": "string (concise but complete summary of the original fairy tale context, max 6 sentences with total 500 words)",
   "main_character": "string (name of the main character)",
   "main_character_trait": "string (most important character trait, max 10 words)",
   "main_character_wish": "string (inner wish or goal of the main character, max 15 words)",
@@ -157,7 +156,7 @@ Return ONLY the following JSON structure without any introduction, commentary, o
       "wish": "string (inner wish or motivation)"
     }
   ],
-  "setting": "string (location and general time description, max 20 words)",
+  "setting": "string (location and general time description, max 40 words)",
   "language": "string (detected language of the input text)"
 }
 
@@ -166,12 +165,8 @@ Follow these clear rules for each field:
 
 1. **original_tale_context**: 
    - Identify the central starting point of the plot, world, and magical elements
-   - Focus on key narrative elements, not minor details
+   - Focus on key narrative elements, not minor details but keep the full story intact
    - Use child-friendly, fairy tale-appropriate language in the detected language
-
-2. **tale_id**: 
-   - Use explicitly provided ID
-   - If none provided, generate a logical ID with pattern "P-###"
 
 3. **main_character**: 
    - Identify only the central figure (not a side character)
@@ -248,7 +243,7 @@ Before submitting your response, verify:
 
 ### Example Output (German):
 {
-  "original_tale_context": "Eine Version von Rotkäppchen, in der ein junges Mädchen ihre kranke Großmutter besucht, während sie von einem Wolf im verzauberten Wald verfolgt wird",
+  "original_tale_context": "Eine Version von Rotkäppchen, in der ein junges Mädchen ihre kranke Großmutter besucht, während sie von einem Wolf im verzauberten Wald verfolgt wird und dabei auf Gegner aus unbekannten Welten trifft. Diese helfen",
   "tale_id": "P-001",
   "main_character": "Rotkäppchen",
   "main_character_trait": "freundlich zu Tieren",
@@ -622,7 +617,7 @@ Updated Summary:"""
                 # Try parsing JSON
                 try:
                     parsed_data = json.loads(raw_content)
-                    logger.info("Successfully parsed initial story elements from LLM response.")
+                    logger.info(f"Successfully parsed initial story elements from LLM response.{parsed_data}")
                     return parsed_data
                 except json.JSONDecodeError:
                     # Attempt to extract JSON from text if direct parsing fails
