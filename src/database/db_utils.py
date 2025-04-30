@@ -272,7 +272,9 @@ def create_user_story(user_id, base_story_id, title=None):
 def get_user_story(story_id):
     """Get a user story by ID"""
     with get_db() as db:
-        return db.query(UserStory).filter(UserStory.id == story_id).first()
+        temp = db.query(UserStory).filter(UserStory.id == story_id).first()
+        temp.language = temp.base_story.language
+        return temp
 
 def get_user_stories(user_id, completed=None):
     """Get all stories for a user, optionally filtering by completion status"""

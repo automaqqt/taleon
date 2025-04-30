@@ -2,8 +2,10 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import styles from '../styles/Home.module.css';
 import * as authService from '../services/auth';
+import useWindowWidth from '../hooks/useWindowWidth';
 
 // Constants
 const MAX_CUSTOM_INPUT_LENGTH = 150;
@@ -59,6 +61,11 @@ const AVAILABLE_MODELS = {
     { id: "microsoft/mai-ds-r1:free", name: "Microsoft MAI DS R1" },
     { id: "nvidia/llama-3.1-nemotron-ultra-253b-v1:free", name: "Nvidia Nemotron 253b" },
     { id: "google/gemini-2.5-flash-preview", name: "!!ACHTUNG KOSTET GELD!!! Gemini 2.5 Flash" },
+    
+    { id: "mistral-small-22b-arliai-rpmax-v1.1", name: "LOKAL Mistral Small 22b RP" },
+    { id: "mistral-small-24b-arliai-rpmax-v1.4", name: "LOKAL Mistral Small 24b RP" },
+    { id: "golden-curry-12b-i1", name: "LOKAL Golden Curry RP" },
+    
   ],
   summary: [
     { id: "mistralai/mistral-small-3.1-24b-instruct:free", name: "Mistral Small 24b" },
@@ -84,8 +91,111 @@ const resetStoryState = () => ({
   rawResponse: null,
 });
 
+// Animation Variants
+const pageVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } },
+  exit: { opacity: 0, y: -20, transition: { duration: 0.3, ease: "easeIn" } }
+};
+
+const bookCoverVariants = {
+  closed: { scaleX: 1, transformOrigin: "left center" },
+  open: { scaleX: 0, transition: { duration: 0.8, ease: [0.6, 0.01, -0.05, 0.9] } } // Custom ease for book feel
+};
+
+const textSegmentVariants = { // Keep this parent variant
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      delay: 0.1, // Slightly shorter delay before starting
+      staggerChildren: 0.01, // Faster character appearance
+      when: "beforeChildren"
+    }
+  }
+};
+
+const characterVariants = {
+  // Simplify: Just animate opacity, remove the 'y' transform which might cause subtle jumps
+  hidden: { opacity: 0 },
+  visible: { opacity: 1 }
+};
+
+const interactionAreaVariants = {
+    hidden: { opacity: 0, y: 30 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut", delay: 0.3 } }, // Delay slightly after text
+    exit: { opacity: 0, y: -20, transition: { duration: 0.2, ease: "easeIn" } }
+};
+
+const debugPanelVariantsDesktop = {
+  hidden: { x: "100%", opacity: 0 },
+  visible: { x: 0, opacity: 1, transition: { type: "spring", stiffness: 120, damping: 20 } },
+  exit: { x: "100%", opacity: 0, transition: { duration: 0.2, ease: "easeIn" } }
+};
+
+const debugPanelVariantsMobile = {
+  // Mobile: Animates from top. Assumes CSS sets position: relative/static
+  hidden: { y: "-100%", opacity: 0 },
+  visible: { y: 0, opacity: 1, transition: { type: "spring", stiffness: 100, damping: 18 } }, // Adjust spring if needed
+  exit: { y: "-100%", opacity: 0, transition: { duration: 0.2, ease: "easeIn" } }
+};
+
+const itemVariants = { // For lists like story selection
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0 }
+};
+
+const listVariants = {
+    visible: { transition: { staggerChildren: 0.1 } }
+};
+const sentenceVariants = { // Container for words
+  hidden: { opacity: 1 }, // Parent is visible instantly
+  visible: {
+    opacity: 1,
+    transition: {
+      delay: 0.1,
+      staggerChildren: 0.04, // Stagger time per WORD
+    }
+  }
+};
+
+const wordVariants = {
+  hidden: { opacity: 0, y: 5 }, // Animate words fading/sliding in
+  visible: { opacity: 1, y: 0 }
+};
+
+const AnimatedWords = ({ text }) => {
+  const shouldReduceMotion = useReducedMotion();
+
+  // Split into words, preserving spaces between them
+  // This regex splits by space but keeps the space attached to the preceding word
+  const words = text.match(/(\S+\s*)/g) || []; // Handle potential empty text
+
+  return (
+    <motion.span
+        variants={shouldReduceMotion ? {} : sentenceVariants}
+        initial="hidden"
+        animate="visible"
+        style={{ display: 'inline' }} // Can likely use inline now
+    >
+      {words.map((word, index) => (
+        <motion.span
+          key={`${word}-${index}`}
+          variants={shouldReduceMotion ? {} : wordVariants}
+          style={{ display: 'inline-block', marginRight: word.endsWith(' ') ? 0 : '0.25em' }} // Keep inline-block for word animation, add space if needed
+        >
+          {word}
+        </motion.span>
+      ))}
+    </motion.span>
+  );
+};
+
+
 export default function HomePage() {
   const router = useRouter();
+  const windowWidth = useWindowWidth(); // Use the hook
+  const isMobileLayout = windowWidth <= 1200;
 
   // --- Authentication State ---
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -121,6 +231,7 @@ export default function HomePage() {
   const [useCustomSummaryPrompt, setUseCustomSummaryPrompt] = useState(false);
   const [summarySystemPrompt, setSummarySystemPrompt] = useState("");
   const [temperature, setTemperature] = useState(DEFAULT_TEMPERATURE); // Use constant
+  const [isNewStoryOpening, setIsNewStoryOpening] = useState(false); // State for book animation
 
   // Refs
   const storyEndRef = useRef(null);
@@ -186,7 +297,13 @@ export default function HomePage() {
 
   // Auto-scroll effect
   useEffect(() => {
-    storyEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (storyHistory.length > 0) { // Only scroll if there's history
+        // Use timeout to allow animation to start before scrolling
+        const timer = setTimeout(() => {
+            storyEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+        }, 100); // Adjust delay as needed
+        return () => clearTimeout(timer);
+    }
   }, [storyHistory]); // Runs when storyHistory changes
 
   // Reset default prompt when toggling custom mode
@@ -363,10 +480,14 @@ export default function HomePage() {
            isLoading: true // Keep loading true for generate call
        });
 
-       setViewState('storyDetail'); // Move to detail view
+       // Trigger book opening animation *before* generating segment
+      setIsNewStoryOpening(true);
+      setViewState('storyDetail');
 
-      // Generate first segment AFTER state is set and view changed
-      // Use await to ensure it completes before setting loading false
+      // Wait briefly for animation to start, then generate first segment
+      // Using await here ensures the story segment generation completes
+      // before potentially changing state again (like setting isLoading to false)
+      await new Promise(resolve => setTimeout(resolve, 100)); // Small delay
       await generateStorySegment({ choice: "Beginne die Geschichte" }, storyId, turnNumber);
 
     } catch (err) {
@@ -375,6 +496,7 @@ export default function HomePage() {
           error: `Failed to create story: ${err.message}`,
           isLoading: false // Ensure loading is off on error
       });
+      setIsNewStoryOpening(false);
       setViewState('storySelect'); // Go back to selection on failure
     }
     // isLoading state is handled within generateStorySegment or the catch block
@@ -583,176 +705,70 @@ export default function HomePage() {
   }
 
   // --- Page Container for Authenticated Users ---
+  // Authenticated Views
   return (
-    <div className={styles.pageContainer}>
-      <div className={`${styles.bookContainer} ${debugPanelVisible ? styles.withDebugPanel : ''}`}>
-        <div className={styles.headerArea}>
-          <h1 className={styles.title}>Taleon</h1>
-          
-          <div className={styles.navButtons}>
-            {viewState !== 'storySelect' && (
-              <button 
-                className={styles.navButton}
-                onClick={handleGoToStorySelect}
-              >
-                New Story
-              </button>
-            )}
-            
-            {viewState !== 'userStories' && (
-              <button 
-                className={styles.navButton}
-                onClick={handleGoToUserStories}
-              >
-                My Stories
-              </button>
-            )}
-            
-            <button 
-              className={styles.navButton}
-              onClick={toggleDebugPanel}
-            >
-              {debugPanelVisible ? "Hide Debug" : "Show Debug"}
-            </button>
-            
-            <button 
-              className={styles.logoutButton}
-              onClick={handleLogout}
-            >
-              Logout
-            </button>
-          </div>
-        </div>
-
-        {/* Debug Panel */}
+    <div className={`${styles.pageContainer} ${debugPanelVisible && isMobileLayout  ? styles.pageContainerMobileDebug : ''}` }>
+      {/* Debug Panel (Animated) */}
+      <AnimatePresence>
         {debugPanelVisible && (
-          <div className={styles.debugPanel}>
-            
-            
+          <motion.div
+            key="debugPanel"
+            className={styles.debugPanel}
+            variants={isMobileLayout ? debugPanelVariantsMobile : debugPanelVariantsDesktop}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+          >
+            {/* LLM Error Display */}
             {llmError && (
               <div className={styles.debugSection}>
                 <h4>LLM Error</h4>
-                <div className={styles.llmErrorContainer}>
-                  <p className={styles.llmErrorMessage}>{llmError}</p>
+                <div className={styles.errorContainer} style={{backgroundColor: '#fff0f1', border: '1px solid #ffccd0'}}> {/* Inline style for debug-specific error */}
+                  <p className={styles.llmErrorText}>{llmError}</p>
                 </div>
               </div>
             )}
-            
+
+             {/* Model Selectors */}
             <div className={styles.debugSection}>
-              <div className={styles.modelSelectors}>
-                <div className={styles.modelSelector}>
-                  <label>Story Generation Model:</label>
-                  <select 
-                    value={selectedStoryModel} 
-                    onChange={(e) => setSelectedStoryModel(e.target.value)}
-                  >
-                    {AVAILABLE_MODELS.story.map(model => (
-                      <option key={model.id} value={model.id}>{model.name}</option>
-                    ))}
-                  </select>
+                 <h4>Models & Temperature</h4>
+                <div className={styles.modelSelectors}>
+                    <div className={styles.modelSelector}>
+                        <label>Story Generation Model:</label>
+                        <select value={selectedStoryModel} onChange={(e) => setSelectedStoryModel(e.target.value)}>
+                            {AVAILABLE_MODELS.story.map(model => (<option key={model.id} value={model.id}>{model.name}</option>))}
+                        </select>
+                    </div>
+                    <div className={styles.modelSelector}>
+                        <label>Summary Generation Model:</label>
+                        <select value={selectedSummaryModel} onChange={(e) => setSelectedSummaryModel(e.target.value)}>
+                             {AVAILABLE_MODELS.summary.map(model => (<option key={model.id} value={model.id}>{model.name}</option>))}
+                        </select>
+                    </div>
                 </div>
-                
-                <div className={styles.modelSelector}>
-                  <label>Summary Generation Model:</label>
-                  <select 
-                    value={selectedSummaryModel} 
-                    onChange={(e) => setSelectedSummaryModel(e.target.value)}
-                  >
-                    {AVAILABLE_MODELS.summary.map(model => (
-                      <option key={model.id} value={model.id}>{model.name}</option>
-                    ))}
-                  </select>
+                 {/* Temperature Slider */}
+                 <div className={styles.temperatureControl}>
+                    <div className={styles.sliderContainer}>
+                        <input type="range" min="0" max="1" step="0.01" value={temperature} onChange={handleTemperatureChange} className={styles.slider} />
+                        <div className={styles.sliderLabels}><span>Predictable</span><span>{temperature.toFixed(2)}</span><span>Creative</span></div>
+                    </div>
                 </div>
-              </div>
             </div>
-            
-            <div className={styles.debugSection}>
-              <h4>Temperature</h4>
-              <div className={styles.temperatureControl}>
-                <div className={styles.sliderContainer}>
-                  <input 
-                    type="range" 
-                    min="0" 
-                    max="1" 
-                    step="0.01"
-                    value={temperature}
-                    onChange={handleTemperatureChange}
-                    className={styles.slider}
-                  />
-                  <div className={styles.sliderLabels}>
-                    <span>More Predictable</span>
-                    <span>{temperature.toFixed(2)}</span>
-                    <span>More Random</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-           {/*  <div className={styles.debugSection}>
-              <h4>System Prompts</h4>
-              
-              <div className={styles.promptToggle}>
-                <label>
-                  <input 
-                    type="checkbox" 
-                    checked={useCustomPrompt} 
-                    onChange={toggleCustomPrompt}
-                  />
-                  Use Custom Story Prompt
-                </label>
-              </div>
-              
-              {useCustomPrompt && (
-                <div className={styles.promptEditor}>
-                  <label>Custom Story System Prompt:</label>
-                  <textarea
-                    ref={systemPromptRef}
-                    value={systemPrompt}
-                    onChange={handleSystemPromptChange}
-                    onInput={autoResizeTextarea}
-                    className={styles.systemPromptTextarea}
-                    rows={5}
-                  />
-                </div>
-              )}
-              
-              <div className={styles.promptToggle}>
-                <label>
-                  <input 
-                    type="checkbox" 
-                    checked={useCustomSummaryPrompt} 
-                    onChange={toggleCustomSummaryPrompt}
-                  />
-                  Use Custom Summary Prompt
-                </label>
-              </div>
-              
-              {useCustomSummaryPrompt && (
-                <div className={styles.promptEditor}>
-                  <label>Custom Summary System Prompt:</label>
-                  <textarea
-                    value={summarySystemPrompt}
-                    onChange={handleSummarySystemPromptChange}
-                    onInput={autoResizeTextarea}
-                    className={styles.systemPromptTextarea}
-                    rows={3}
-                    placeholder="Enter your custom summary prompt here"
-                  />
-                </div>
-              )}
-            </div> */}
-            
+
+            {/* System Prompts (Optional - Uncomment if needed) */}
+            {/* <div className={styles.debugSection}> ... </div> */}
+
+            {/* Raw Response */}
             {rawResponse && (
               <div className={styles.debugSection}>
                 <h4>Raw LLM Response</h4>
                 <pre className={styles.rawResponseDisplay}>
-                  {typeof rawResponse === 'object' 
-                    ? JSON.stringify(rawResponse, null, 2) 
-                    : rawResponse}
+                  {typeof rawResponse === 'object' ? JSON.stringify(rawResponse, null, 2) : rawResponse}
                 </pre>
               </div>
             )}
-            
+
+            {/* Current State */}
             <div className={styles.debugSection}>
               <h4>Current State</h4>
               <div className={styles.stateDisplay}>
@@ -760,203 +776,269 @@ export default function HomePage() {
                 <div><strong>Turn:</strong> {currentTurnNumber}</div>
                 <div className={styles.summaryDisplay}>
                   <strong>Current Summary:</strong>
-                  <div className={styles.summaryText}>{currentSummary}</div>
+                  <div className={styles.summaryText}>{currentSummary || 'Not generated yet.'}</div>
                 </div>
+                 <div><strong>Is Completed:</strong> {storyCompleted ? 'Yes' : 'No'}</div>
               </div>
             </div>
-          </div>
+          </motion.div>
         )}
-
-        {/* Story Selection View */}
-        {viewState === 'storySelect' && (
-          <div className={styles.startContainer}>
-            <h2 className={styles.startTitle}>Choose a Tale to Begin</h2>
-            
-            {dataLoading && <p className={styles.loading}>Loading available tales...</p>}
-            {error && <p className={styles.error}>{error}</p>}
-            
-            {!dataLoading && !error && availableBaseStories.length === 0 && (
-              <p>No tales found. Please contact the administrator.</p>
-            )}
-            
-            {!dataLoading && !error && availableBaseStories.length > 0 && (
-              <div className={styles.taleListContainer}>
-                {availableBaseStories.map((baseStory) => (
-                  <button
-                    key={baseStory.id}
-                    onClick={() => handleSelectBaseStory(baseStory.id)}
-                    className={styles.startButton}
-                    disabled={isLoading}
-                  >
-                    {baseStory.title}
-                    <span className={styles.storyDescription}>{baseStory.description}</span>
-                  </button>
-                ))}
-              </div>
-            )}
+      </AnimatePresence>
+      {/* Main Book Structure */}
+      <motion.div
+        className={`${styles.bookContainer} ${debugPanelVisible ? styles.withDebugPanel : ''}`}
+        initial={false} // No initial animation for the container itself unless needed
+        animate={{ marginRight: debugPanelVisible && !isMobileLayout ? 320 : 0 }} // Animate margin change
+        transition={{ duration: 0.3, ease: "easeOut" }}
+      >
+        {/* Header */}
+        <div className={styles.headerArea}>
+          <h1 className={styles.title}>Taleon</h1>
+          <div className={styles.navButtons}>
+            {/* Navigation Buttons */}
+            {viewState !== 'storySelect' && ( <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className={styles.navButton} onClick={handleGoToStorySelect}>New Story</motion.button> )}
+            {viewState !== 'userStories' && ( <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className={styles.navButton} onClick={handleGoToUserStories}>My Stories</motion.button> )}
+            <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className={`${styles.navButton} ${styles.navButtonDebug}`} onClick={toggleDebugPanel}>{debugPanelVisible ? "Hide Debug" : "Show Debug"}</motion.button>
+            <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className={styles.logoutButton} onClick={handleLogout}>Logout</motion.button>
           </div>
-        )}
+        </div>
 
-        {/* User Stories View */}
-        {viewState === 'userStories' && (
-          <div className={styles.startContainer}>
-            <h2 className={styles.startTitle}>Your Stories</h2>
-            
-            {dataLoading && <p className={styles.loading}>Loading your stories...</p>}
-            {error && <p className={styles.error}>{error}</p>}
-            
-            {!dataLoading && !error && userStories.length === 0 && (
-              <div className={styles.noStoriesContainer}>
-                <p>You haven't created any stories yet.</p>
-                <button
-                  onClick={handleGoToStorySelect}
-                  className={styles.startButton}
-                >
-                  Start a New Story
-                </button>
-              </div>
-            )}
-            
-            {!dataLoading && !error && userStories.length > 0 && (
-              <div className={styles.userStoriesContainer}>
-                {userStories.map((story) => (
-                  <div key={story.id} className={styles.userStoryCard}>
-                    <h3>{story.title}</h3>
-                    <p>Based on: {story.baseStoryTitle}</p>
-                    <p>Turn: {story.currentTurnNumber}</p>
-                    <p>Last updated: {new Date(story.updatedAt).toLocaleDateString()}</p>
-                    
-                    <button
-                      onClick={() => handleSelectUserStory(story.id)}
-                      className={styles.continueButton}
-                    >
-                      {story.isCompleted ? 'View Completed Story' : 'Continue Story'}
-                    </button>
-                  </div>
-                ))}
-                
-                <button
-                  onClick={handleGoToStorySelect}
-                  className={styles.newStoryButton}
-                >
-                  Start a New Story
-                </button>
-              </div>
-            )}
-          </div>
-        )}
+        {/* Animated View Content */}
+        <AnimatePresence mode="wait"> {/* mode="wait" ensures exit animation completes first */}
+          {viewState === 'storySelect' && (
+            <motion.div key="storySelect" variants={pageVariants} initial="hidden" animate="visible" exit="exit" className={styles.startContainer}>
+              <h2 className={styles.startTitle}>Choose a Tale to Begin</h2>
+              {/* Loading/Error States */}
+              {dataLoading && <div className={styles.loadingContainer}><div className={styles.loadingSpinner}></div><p className={styles.loadingText}>Loading available tales...</p></div>}
+               <AnimatePresence>
+                {error && <motion.p initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} className={styles.errorText}>{error}</motion.p>}
+               </AnimatePresence>
 
-        {/* Story Detail View */}
-        {viewState === 'storyDetail' && (
-          <div className={styles.contentContainer}>
-            <div className={styles.storyArea}>
-              {storyHistory.map((item, index) => (
-                <p key={index} className={`${styles.storyText} ${styles[item.type]}`}>
-                  {item.text}
-                </p>
-              ))}
-              <div ref={storyEndRef} />
-            </div>
-
-            <div className={styles.interactionArea}>
-              {isLoading && <p className={styles.loading}>The quill scribbles furiously...</p>}
-
-              {(error || llmError) && (
-                <div className={styles.errorContainer}>
-                  {error && <p className={styles.error}>A smudge on the page: {error}</p>}
-                  {llmError && <p className={styles.llmError}>Language Model Error: {llmError}</p>}
-                  {lastAttemptedAction && !isLoading && (
-                    <button
-                      onClick={handleRetry}
-                      className={styles.retryButton}
+              {!dataLoading && !error && availableBaseStories.length === 0 && (<p>No tales found.</p>)}
+              {!dataLoading && !error && availableBaseStories.length > 0 && (
+                <motion.div className={styles.taleListContainer} variants={listVariants} initial="hidden" animate="visible">
+                  {availableBaseStories.map((baseStory) => (
+                    <motion.button
+                      key={baseStory.id}
+                      variants={itemVariants}
+                      whileHover={{ scale: 1.03, transition: { duration: 0.15 } }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => handleSelectBaseStory(baseStory.id)}
+                      className={styles.startButton}
                       disabled={isLoading}
                     >
-                      Retry Last Action
-                    </button>
-                  )}
-                </div>
+                      <h3>{baseStory.title}</h3>
+                      <span className={styles.storyDescription}>{baseStory.description}</span>
+                    </motion.button>
+                  ))}
+                </motion.div>
               )}
+            </motion.div>
+          )}
 
-              {!isLoading && !error && currentChoices.length > 0 && (
-                <div className={styles.choicesArea}>
-                  <h3 className={styles.interactionPrompt}>What happens next?</h3>
-                  <div className={styles.choiceButtonsContainer}>
-                    {currentChoices.map((choice, index) => (
-                      <button
-                        key={index}
-                        onClick={() => handleChoiceClick(choice)}
-                        className={styles.choiceButton}
-                        disabled={isLoading}
-                      >
-                        {choice}
-                      </button>
-                    ))}
-                  </div>
+          {viewState === 'userStories' && (
+             <motion.div key="userStories" variants={pageVariants} initial="hidden" animate="visible" exit="exit" className={styles.startContainer}>
+               <h2 className={styles.startTitle}>Your Stories</h2>
+               {/* Loading/Error States */}
+                {dataLoading && <div className={styles.loadingContainer}><div className={styles.loadingSpinner}></div><p className={styles.loadingText}>Loading your stories...</p></div>}
+                 <AnimatePresence>
+                    {error && <motion.p initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} className={styles.errorText}>{error}</motion.p>}
+                 </AnimatePresence>
 
-                  {!storyCompleted && (
-                    <>
-                      {isCustomInputVisible && (
-                        <div className={styles.customInputContainer}>
-                          <label htmlFor="customAction" className={styles.customInputLabel}>
-                            Or, dictate your own fate:
-                          </label>
-                          <textarea
-                            id="customAction"
-                            value={customInput}
-                            onChange={handleInputChange}
-                            placeholder={`Max ${MAX_CUSTOM_INPUT_LENGTH} characters...`}
-                            rows="3"
-                            className={styles.customInputTextarea}
-                            maxLength={MAX_CUSTOM_INPUT_LENGTH}
-                            disabled={isLoading}
-                            autoFocus
-                          />
-                          <div className={styles.customInputFooter}>
-                            <span className={styles.customInputCounter}>
-                              {customInput.length}/{MAX_CUSTOM_INPUT_LENGTH}
-                            </span>
-                            <button
-                              onClick={handleCustomSubmit}
-                              className={styles.customInputButton}
-                              disabled={isLoading || !customInput.trim()}
-                            >
-                              Declare Action
-                            </button>
-                          </div>
-                        </div>
-                      )}
+                {!dataLoading && !error && userStories.length === 0 && (
+                    <motion.div variants={itemVariants} className={styles.noStoriesContainer}>
+                        <p>You haven't created any stories yet.</p>
+                        <motion.button
+                          whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.98 }}
+                          onClick={handleGoToStorySelect}
+                          className={`${styles.startButton} ${styles.newStoryButton}`} // Reuse styles
+                        > Start a New Story </motion.button>
+                    </motion.div>
+                )}
+                {!dataLoading && !error && userStories.length > 0 && (
+                    <motion.div className={styles.userStoriesContainer} variants={listVariants} initial="hidden" animate="visible">
+                        {userStories.map((story) => (
+                            <motion.div key={story.id} variants={itemVariants} whileHover={{ y: -5 }} className={styles.userStoryCard}>
+                                <h3>{story.title}</h3>
+                                <p>Based on: {story.baseStoryTitle}</p>
+                                <p>Turn: {story.currentTurnNumber}</p>
+                                <p>Last updated: {new Date(story.updatedAt).toLocaleDateString()}</p>
+                                <motion.button
+                                    whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+                                    onClick={() => handleSelectUserStory(story.id)}
+                                    className={styles.continueButton}
+                                    disabled={isLoading}
+                                > {story.isCompleted ? 'View Completed Story' : 'Continue Story'} </motion.button>
+                            </motion.div>
+                        ))}
+                        <motion.button
+                            whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+                            onClick={handleGoToStorySelect}
+                            className={styles.newStoryButton}
+                        > Start a New Story </motion.button>
+                    </motion.div>
+                )}
+             </motion.div>
+          )}
 
-                      <div className={styles.toggleCustomContainer}>
-                        <button
-                          onClick={toggleCustomInput}
-                          className={styles.toggleCustomInputButton}
-                          disabled={isLoading}
-                        >
-                          {isCustomInputVisible ? 'Cancel Custom Action' : 'Write Custom Action'}
-                        </button>
-                        
-                        {!storyCompleted && currentTurnNumber > 5 && (
-                          <button
-                            onClick={handleStoryCompletion}
-                            className={styles.completeStoryButton}
-                            disabled={isLoading}
-                          >
-                            Complete Story
-                          </button>
+          {viewState === 'storyDetail' && (
+            <motion.div key="storyDetail" variants={pageVariants} initial="hidden" animate="visible" exit="exit" className={styles.contentContainer}>
+               {/* Book Opening Animation Overlay */}
+               <AnimatePresence>
+                 {isNewStoryOpening && !isLoading && ( // Show only when new story starts and not already loading next segment
+                   <motion.div
+                     key="bookCover"
+                     className={styles.bookCover}
+                     variants={bookCoverVariants}
+                     initial="closed"
+                     animate="open"
+                     exit="open" // Ensure it animates out if needed
+                     onAnimationComplete={() => setIsNewStoryOpening(false)} // Hide after animation
+                   >
+                     Opening Tale...
+                   </motion.div>
+                 )}
+               </AnimatePresence>
+
+              {/* Story Text Area */}
+              <div className={styles.storyArea}>
+                 <AnimatePresence initial={false}> {/* Don't animate initial load of history */}
+                    {storyHistory.map((item, index) => {const itemClasses = `${styles.storyText} ${styles[item.type] || styles.story}`; // Default to .story if type is missing
+
+                return (
+                  <motion.p
+                  key={`${currentStoryId}-${item.id || index}`}
+                  className={itemClasses}
+                  // No initial animation needed on the <p> itself if words animate
+                  initial={false} // Or maybe a slight initial fade: initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                  animate={false}
+                  transition={{ duration: 0 }} // No transition on the <p>
+              >
+                  {/* Apply AnimatedWords ONLY to the latest 'story' type */}
+                  {item.type === 'story' && index === storyHistory.length - 1
+                      ? <AnimatedWords text={item.text} />
+                      : item.text}
+              </motion.p>
+                );})}
+                 </AnimatePresence>
+                 <div ref={storyEndRef} /> {/* Scroll target */}
+              </div>
+
+              {/* Interaction Area */}
+              <AnimatePresence mode="wait">
+                {isLoading && (
+                    <motion.div
+                        key="loading"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className={styles.loadingContainer}
+                    >
+                        <div className={styles.loadingSpinner}></div>
+                        <p className={styles.loadingText}>The quill scribbles furiously...</p>
+                    </motion.div>
+                )}
+
+                {(error || llmError) && !isLoading && (
+                     <motion.div
+                        key="error"
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0 }}
+                        className={styles.errorContainer}
+                    >
+                        {error && <p className={styles.errorText}>A smudge on the page: {error}</p>}
+                        {llmError && <p className={styles.llmErrorText}>The ink whispers an error: {llmError}</p>}
+                        {lastAttemptedAction && (
+                            <motion.button
+                                whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+                                onClick={handleRetry}
+                                className={styles.retryButton}
+                                disabled={isLoading}
+                            > Retry Last Action </motion.button>
                         )}
-                      </div>
-                    </>
-                  )}
-                </div>
-              )}
+                    </motion.div>
+                )}
 
-              {!isLoading && !error && currentChoices.length === 0 && storyHistory.length > 0 && (
-                <p className={styles.endMessage}>The ink dries... for now.</p>
-              )}
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
+                {!isLoading && !error && currentChoices.length > 0 && (
+                   <motion.div
+                        key={`choices-${currentTurnNumber}`} // Key change triggers animation
+                        variants={interactionAreaVariants}
+                        initial="hidden"
+                        animate="visible"
+                        exit="exit"
+                        className={styles.interactionArea}
+                    >
+                     <h3 className={styles.interactionPrompt}>What happens next?</h3>
+                     <div className={styles.choicesArea}>
+                        <motion.div className={styles.choiceButtonsContainer} variants={listVariants}>
+                            {currentChoices.map((choice, index) => (
+                                <motion.button
+                                    key={index}
+                                    variants={itemVariants}
+                                    whileHover={{ scale: 1.03, y: -2, transition: { duration: 0.1 } }}
+                                    whileTap={{ scale: 0.98 }}
+                                    onClick={() => handleChoiceClick(choice)}
+                                    className={styles.choiceButton}
+                                    disabled={isLoading}
+                                > {choice} </motion.button>
+                            ))}
+                        </motion.div>
+
+                        {!storyCompleted && (
+                        <>
+                           <AnimatePresence>
+                            {isCustomInputVisible && (
+                                <motion.div
+                                    key="customInput"
+                                    initial={{ opacity: 0, height: 0 }}
+                                    animate={{ opacity: 1, height: 'auto' }}
+                                    exit={{ opacity: 0, height: 0 }}
+                                    transition={{ duration: 0.3 }}
+                                    className={styles.customInputContainer}
+                                >
+                                    <label htmlFor="customAction" className={styles.customInputLabel}>Or, dictate your own fate:</label>
+                                    <textarea id="customAction" value={customInput} onChange={handleInputChange} placeholder={`Max ${MAX_CUSTOM_INPUT_LENGTH} characters...`} rows="3" className={styles.customInputTextarea} maxLength={MAX_CUSTOM_INPUT_LENGTH} disabled={isLoading} autoFocus />
+                                    <div className={styles.customInputFooter}>
+                                        <span className={styles.customInputCounter}>{customInput.length}/{MAX_CUSTOM_INPUT_LENGTH}</span>
+                                        <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={handleCustomSubmit} className={styles.customInputButton} disabled={isLoading || !customInput.trim()}>Declare Action</motion.button>
+                                    </div>
+                                </motion.div>
+                            )}
+                           </AnimatePresence>
+
+                            <div className={styles.toggleCustomContainer}>
+                                <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={toggleCustomInput} className={styles.toggleCustomInputButton} disabled={isLoading}>{isCustomInputVisible ? 'Cancel Custom Action' : 'Write Custom Action'}</motion.button>
+                                {!storyCompleted && currentTurnNumber > 5 && ( // Show complete button logic
+                                    <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={handleStoryCompletion} className={styles.completeStoryButton} disabled={isLoading}>Complete Story</motion.button>
+                                )}
+                                {storyCompleted && ( // Show continue button if completed
+                                    <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={handleStoryContinuation} className={styles.continueButton} disabled={isLoading}>Continue This Tale?</motion.button>
+                                )}
+                            </div>
+                        </>
+                        )}
+                     </div>
+                   </motion.div>
+                )}
+
+                {/* End Message */}
+                {!isLoading && !error && currentChoices.length === 0 && storyHistory.length > 0 && !storyCompleted && (
+                     <motion.p key="end" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} className={styles.endMessage}>The ink dries... for now.</motion.p>
+                )}
+                {!isLoading && !error && storyCompleted && currentChoices.length === 0 && ( // Message specific to completed stories with no action choices
+                     <motion.p key="completed-end" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} className={styles.endMessage}>The tale is told. Return to your library or start anew?</motion.p>
+                     // Add buttons here to navigate if needed, or rely on header nav
+                )}
+              </AnimatePresence>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+      </motion.div> {/* End Book Container */}
+
+      
+
+    </div> // End Page Container
   );
 }

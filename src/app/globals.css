@@ -1,8 +1,25 @@
 @import "tailwindcss";
 
+@import url('https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,400;0,700;1,400&family=Lato:wght@400;700&display=swap');
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --font-serif: 'Merriweather', serif;
+  --font-sans: 'Lato', sans-serif;
+  --color-text-main: #4a3c31; /* Darker brown for text */
+  --color-text-subtle: #7a6a5f;
+  --color-bg-page: #fdfaf4;   /* Very light parchment */
+  --color-bg-container: #fffcf7; /* Slightly off-white for containers inside */
+  --color-border: #e0d5c6;
+  --color-primary: #8c6b5d;    /* Muted brown for primary actions */
+  --color-primary-hover: #6b4f43;
+  --color-secondary: #a1887f;  /* Lighter brown for secondary */
+  --color-secondary-hover: #8d6e63;
+  --color-accent: #b08d57;     /* Gold-ish accent for highlights */
+  --color-error-bg: #f8d7da;
+  --color-error-text: #721c24;
+  --shadow-soft: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-medium: 0 6px 16px rgba(0, 0, 0, 0.1);
+  --border-radius: 8px;
 }
 
 @theme inline {

@@ -39,6 +39,9 @@ VALID_STORY_CONFIG_KEYS = {
     "reward",
     "cliffhanger_situation",
     "setting",
+    "language",
+    "current_turn_number",
+    "last_choices",
     # Also include existing dynamic placeholders
     "current_summary",
     "original_tale_context"
@@ -193,7 +196,7 @@ Your JSON Response:"""
                     {"role": "user", "content": user_prompt}
                 ],
                 "temperature": temperature,
-                "response_format": {"type": "json_object"},
+                #"response_format": {"type": "json_object"},
                 "max_tokens": 2000
             }
 
@@ -201,7 +204,7 @@ Your JSON Response:"""
             logger.debug(f"API Payload (excluding messages for brevity): { {k:v for k,v in payload.items() if k != 'messages'} }")
 
 
-            async with httpx.AsyncClient(timeout=60.0) as client:
+            async with httpx.AsyncClient(timeout=460.0) as client:
                 response = await client.post(self.openrouter_api_url, headers=headers, json=payload)
                 response.raise_for_status()
 

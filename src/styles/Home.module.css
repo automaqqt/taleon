@@ -1,600 +1,785 @@
-/* styles/home.module.css */
+/* styles/Home.module.css */
 
-/* Base styles */
+
+/* Base */
 .pageContainer {
-    min-height: 100vh;
-    padding: 20px;
-    background-color: #f0e6d6;
-    font-family: 'Georgia', serif;
-    color: #3d2c2e;
-  }
-  
-  .authContainer {
-    max-width: 400px;
-    margin: 2rem auto;
-    padding: 2rem;
-    background: #fff9f0;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  }
-  
-  .authTitle {
-    text-align: center;
-    color: #5d4037;
-    margin-bottom: 2rem;
-  }
-  
-  .authForm {
-    display: flex;
+  min-height: 100vh;
+  padding: 20px;
+  background-color: #e8e0d4; /* Slightly darker outer background */
+  background-image: linear-gradient(rgba(0,0,0,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.02) 1px, transparent 1px);
+  background-size: 20px 20px; /* Subtle texture */
+  font-family: var(--font-sans);
+  color: var(--color-text-main);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start; /* Align book to top */
+}
+
+.pageContainerMobileDebug{
     flex-direction: column;
-    gap: 1rem;
-  }
+}
+
+/* --- Auth Styles --- */
+.authContainer {
+  max-width: 400px;
+  margin: 5rem auto;
+  padding: 2.5rem;
+  background: var(--color-bg-container);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-medium);
+  border: 1px solid var(--color-border);
+}
+
+.authTitle {
+  text-align: center;
+  font-family: var(--font-serif);
+  color: var(--color-primary);
+  margin-bottom: 2rem;
+  font-size: 2rem;
+}
+
+.authForm {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+.formGroup label {
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--color-text-subtle);
+  margin-bottom: 0.3rem;
+  display: block;
+}
+
+.formGroup input {
+  padding: 0.8rem 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  font-size: 1rem;
+  font-family: var(--font-sans);
+  background-color: #fff;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.formGroup input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(140, 107, 93, 0.2);
+}
+
+.authButton {
+  background-color: var(--color-primary);
+  color: white;
+  padding: 0.9rem 1rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 700;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+  margin-top: 1rem;
+}
+
+.authButton:hover:not(:disabled) {
+  background-color: var(--color-primary-hover);
+  transform: translateY(-2px);
+}
+.authButton:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.authError {
+  color: var(--color-error-text);
+  background-color: var(--color-error-bg);
+  border: 1px solid darken(var(--color-error-bg), 10%);
+  padding: 0.8rem 1rem;
+  border-radius: 6px;
+  text-align: center;
+  font-size: 0.9rem;
+}
+
+.loginInfo {
+  margin-top: 2rem;
+  padding: 1rem;
+  background-color: var(--color-bg-page);
+  border-radius: 6px;
+  font-size: 0.85rem;
+  color: var(--color-text-subtle);
+  border: 1px dashed var(--color-border);
+}
+.loginInfo p { margin: 0.3rem 0; }
+.loginInfo strong { color: var(--color-text-main); }
+
+/* --- Main Book Container --- */
+.bookContainer {
+  max-width: 900px; /* Wider for book feel */
+  width: 100%;
+  margin: 2rem;
+  background: var(--color-bg-page);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-medium), 0 0 0 10px rgba(0,0,0,0.02); /* Page stack effect */
+  border: 1px solid var(--color-border);
+  padding: 2rem 2.5rem;
+  position: relative; /* For debug panel positioning */
+  overflow: hidden; /* Needed for animations */
+  transition: margin-right 0.3s ease-out; /* Animate margin for debug panel */
+}
+
+.withDebugPanel {
+  margin-right: 320px; /* Keep space for debug */
+}
+
+/* --- Book Header --- */
+.headerArea {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 2px solid var(--color-border);
+  position: relative; /* Ensure header is above content */
+  z-index: 10;
+}
+
+.title {
+  font-family: var(--font-serif);
+  color: var(--color-primary);
+  margin: 0;
+  font-size: 2.2rem;
+  font-weight: 700;
+}
+
+.navButtons {
+  display: flex;
+  gap: 0.8rem;
+}
+
+.navButton, .logoutButton {
+  padding: 0.6rem 1.2rem;
+  border: 1px solid transparent;
+  border-radius: 20px; /* Pill shape */
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 700;
+  transition: background-color 0.2s ease, color 0.2s ease, transform 0.1s ease, border-color 0.2s ease;
+}
+
+.navButton {
+  background-color: var(--color-secondary);
+  color: white;
+}
+.navButton:hover {
+  background-color: var(--color-secondary-hover);
+  transform: translateY(-2px);
+}
+
+/* Specific Nav Button Styles */
+.navButtonDebug { /* Style debug toggle differently */
+  background-color: transparent;
+  border-color: var(--color-secondary);
+  color: var(--color-secondary);
+}
+.navButtonDebug:hover {
+  background-color: rgba(161, 136, 127, 0.1);
+  color: var(--color-secondary-hover);
+  transform: translateY(-2px);
+}
+
+.logoutButton {
+  background-color: transparent;
+  border-color: var(--color-text-subtle);
+  color: var(--color-text-subtle);
+}
+.logoutButton:hover {
+  background-color: rgba(122, 106, 95, 0.1);
+  color: var(--color-text-main);
+  transform: translateY(-2px);
+}
+
+/* --- Content Area (Story, Choices) --- */
+.contentContainer {
+  position: relative; /* For positioning page turn animations */
+  min-height: 50vh; /* Ensure space */
+}
+
+/* Story Display Area */
+.storyArea {
+  background: transparent; /* Use book background */
+  padding: 1rem 0; /* Adjust padding */
+  min-height: 300px;
+  max-height: 60vh;
+  overflow: hidden;
+  margin-bottom: 2rem;
+  /* Custom scrollbar (optional) */
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-secondary) var(--color-bg-page);
+}
+.storyArea::-webkit-scrollbar { width: 8px; }
+.storyArea::-webkit-scrollbar-track { background: var(--color-bg-page); border-radius: 4px; }
+.storyArea::-webkit-scrollbar-thumb { background-color: var(--color-secondary); border-radius: 4px; border: 2px solid var(--color-bg-page); }
+
+
+.storyText {
+    font-family: var(--font-serif);
+    font-size: 1.05rem;
+    line-height: 1.65;
+    margin: 0 0 1.2rem 0;
+    color: var(--color-text-main);
+    font-weight: 400;
+    letter-spacing: normal;
+    word-spacing: normal;
+    transition: color 0.2s ease;
   
-  .formGroup {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
+    /* --- Reconfirm/Adjust these lines --- */
+    white-space: pre-wrap !important;  /* Preserve breaks/spaces, allow wrapping */
+    word-wrap: break-word !important;  /* Older equivalent for overflow-wrap, sometimes helps */
+    overflow-wrap: break-word !important; /* Prefer breaking words over overflow */
+    word-break: normal !important;     /* Use standard break rules */
+    -webkit-hyphens: none !important;  /* Vendor prefixes for hyphens */
+    -moz-hyphens: none !important;
+    -ms-hyphens: none !important;
+    hyphens: none !important;         /* Standard hyphens */
+    /* --- End of added/modified lines --- */
   }
-  
-  .formGroup label {
-    font-weight: 600;
-  }
-  
-  .formGroup input {
-    padding: 0.8rem;
-    border: 1px solid #d4c4b5;
-    border-radius: 4px;
-    font-size: 1rem;
-  }
-  
-  .authButton {
-    background-color: #8c6b5d;
-    color: white;
-    padding: 1rem;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background-color 0.2s;
-  }
-  
-  .authButton:hover {
-    background-color: #6b4f43;
-  }
-  
-  .authError {
-    color: #dc3545;
-    padding: 0.5rem;
-    background-color: #f8d7da;
-    border-radius: 4px;
-    text-align: center;
-  }
-  
-  .loginInfo {
-    margin-top: 1.5rem;
-    padding: 1rem;
-    background-color: #f8f4f0;
-    border-radius: 4px;
-    font-size: 0.9rem;
-  }
-  
-  /* Main container */
-  .bookContainer {
-    max-width: 800px;
-    margin: 0 auto;
-    background: #fff9f0;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    padding: 2rem;
-    position: relative;
-  }
-  
-  .withDebugPanel {
-    margin-right: 320px;
-  }
-  
-  .headerArea {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 2rem;
-    padding-bottom: 1rem;
-    border-bottom: 2px solid #e0d5c6;
-  }
-  
-  .title {
-    color: #5d4037;
-    margin: 0;
-  }
-  
-  .navButtons {
-    display: flex;
-    gap: 1rem;
-  }
-  
-  .navButton, .logoutButton {
-    padding: 0.5rem 1rem;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background-color 0.2s;
-  }
-  
-  .navButton {
-    background-color: #a1887f;
-    color: white;
-  }
-  
-  .navButton:hover {
-    background-color: #8d6e63;
-  }
-  
-  .logoutButton {
-    background-color: #6d4c41;
-    color: white;
-  }
-  
-  /* Story content */
-  .contentContainer {
-    display: flex;
-    flex-direction: column;
-    gap: 2rem;
-  }
-  
-  .storyArea {
-    background: #f8f4f0;
-    padding: 2rem;
-    border-radius: 4px;
-    min-height: 300px;
-    max-height: 60vh;
-    overflow-y: auto;
-  }
-  
-  .storyText {
-    line-height: 1.6;
-    margin: 0 0 1.5rem 0;
-    white-space: pre-wrap;
-  }
-  
-  .storyText.choice {
-    color: #6d4c41;
+
+
+  .storyText.choice { /* User's previous choice */
+    color: var(--color-secondary-hover);
     font-style: italic;
+    border-left: 3px solid var(--color-secondary);
+    padding-left: 1rem;
+    /* margin-left: -1rem; /* Keep if you like the indent effect */
+    /* Ensure it doesn't override core font styles */
+    font-size: inherit;
+    line-height: inherit;
+    font-family: inherit;
   }
   
-  .storyText.userInput {
-    color: #8c6b5d;
-    font-weight: 500;
-  }
-  
-  /* Choices area */
-  .interactionArea {
-    padding: 1rem;
-    background: #f8f4f0;
-    border-radius: 4px;
-  }
-  
-  .choicesArea {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-  }
-  
-  .choiceButtonsContainer {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 1rem;
-  }
-  
-  .choiceButton {
-    background-color: #a1887f;
-    color: white;
-    padding: 1rem;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background-color 0.2s;
-    text-align: left;
-  }
-  
-  .choiceButton:hover {
-    background-color: #8d6e63;
-  }
-  
-  /* Debug panel */
-  .debugPanel {
-    position: fixed;
-    right: 0;
-    top: 0;
-    bottom: 0;
-    width: 300px;
-    background: white;
-    padding: 1rem;
-    overflow-y: auto;
-    box-shadow: -2px 0 8px rgba(0, 0, 0, 0.1);
-  }
-  
-  .debugSection {
-    margin-bottom: 1.5rem;
-    padding-bottom: 1.5rem;
-    border-bottom: 1px solid #eee;
-  }
-  
-  .modelSelectors {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-  }
-  
-  .modelSelector select {
-    width: 100%;
-    padding: 0.5rem;
-  }
-  
-  .systemPromptTextarea {
-    width: 100%;
-    padding: 0.5rem;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    resize: vertical;
-  }
-  
-  .rawResponseDisplay {
-    background: #f8f8f8;
-    padding: 0.5rem;
-    border-radius: 4px;
-    max-height: 200px;
-    overflow-y: auto;
-    font-size: 0.8rem;
-  }
-  
-  /* Utility classes */
-  .loading {
-    color: #8c6b5d;
-    text-align: center;
-    font-style: italic;
-  }
-  
-  .error {
-    color: #dc3545;
-    padding: 1rem;
-    background-color: #f8d7da;
-    border-radius: 4px;
-  }
-  
-  /* Custom input */
-  .customInputContainer {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-  
-  .customInputTextarea {
-    width: 100%;
-    padding: 0.8rem;
-    border: 1px solid #d4c4b5;
-    border-radius: 4px;
-    resize: vertical;
-  }
-  
-  .customInputFooter {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  
-  .customInputButton {
-    background-color: #8c6b5d;
-    color: white;
-    padding: 0.5rem 1rem;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-  }
-  
-  /* Story selection */
-  .startContainer {
-    padding: 2rem;
-  }
-  
-  .taleListContainer {
-    display: grid;
-    gap: 1rem;
-  }
-  
-  .startButton {
-    display: flex;
-    flex-direction: column;
-    padding: 1.5rem;
-    background: #f8f4f0;
-    border: 2px solid #e0d5c6;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: background-color 0.2s;
-  }
-  
-  .startButton:hover {
-    background: #ece4db;
-  }
-  
-  /* User stories */
-  .userStoriesContainer {
-    display: grid;
-    gap: 1rem;
-  }
-  
-  .userStoryCard {
-    padding: 1.5rem;
-    background: #f8f4f0;
-    border-radius: 8px;
-    border: 1px solid #e0d5c6;
-  }
-  
-  .continueButton {
-    margin-top: 1rem;
-    background-color: #a1887f;
-    color: white;
-    padding: 0.5rem 1rem;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-  }
-  
-  /* Responsive adjustments */
-  @media (max-width: 768px) {
-    .bookContainer {
-      padding: 1rem;
-    }
-    
-    .headerArea {
-      flex-direction: column;
-      gap: 1rem;
-    }
-    
-    .withDebugPanel {
-      margin-right: 0;
-    }
-    
-    .debugPanel {
-      position: static;
-      width: 100%;
-    }
+  .storyText.userInput { /* User's custom input */
+    color: var(--color-primary-hover);
+    font-weight: 600; /* Slightly bolder than normal, but maybe not 700 */
+    border-left: 3px solid var(--color-primary);
+    padding-left: 1rem;
+    /* margin-left: -1rem; /* Keep if you like the indent effect */
+     /* Ensure it doesn't override core font styles */
+    font-style: normal; /* Override potential italic from choice */
+    font-size: inherit;
+    line-height: inherit;
+    font-family: inherit;
   }
 
+  .storyText.story,
+.storyText.choice,
+.storyText.userInput {
+    /* Ensure these inherit the parent's wrap/break settings */
+    word-wrap: inherit;
+    overflow-wrap: inherit;
+    word-break: inherit;
+    hyphens: inherit;
+}
 
-/* Temperature slider styles */
-.temperatureControl {
-    margin-top: 0.5rem;
-    margin-bottom: 1.5rem;
-  }
-  
-  .sliderContainer {
-    width: 100%;
-  }
-  
-  .slider {
-    -webkit-appearance: none;
-    width: 100%;
-    height: 8px;
-    border-radius: 5px;
-    background: linear-gradient(to right, #007bff, #ff4136);
-    outline: none;
-    opacity: 0.8;
-    -webkit-transition: opacity .2s;
-    transition: opacity .2s;
-  }
-  
-  .slider:hover {
-    opacity: 1;
-  }
-  
-  .slider::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 18px;
-    height: 18px;
-    border-radius: 50%;
-    background: #6b8e23;
-    cursor: pointer;
-    border: 2px solid white;
-    box-shadow: 0 0 3px rgba(0, 0, 0, 0.3);
-  }
-  
-  .slider::-moz-range-thumb {
-    width: 18px;
-    height: 18px;
-    border-radius: 50%;
-    background: #6b8e23;
-    cursor: pointer;
-    border: 2px solid white;
-    box-shadow: 0 0 3px rgba(0, 0, 0, 0.3);
-  }
-  
-  .sliderLabels {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 8px;
-    font-size: 0.75rem;
-    color: #666;
-  }
-  
-  .sliderLabels span:nth-child(2) {
-    font-weight: bold;
-    color: #444;
-    font-size: 0.85rem;
-    background-color: #f5f5f5;
-    border-radius: 3px;
-    padding: 1px 5px;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-  }
+/* Interaction Area (Choices, Input) */
+.interactionArea {
+  padding: 1.5rem;
+  background: var(--color-bg-container);
+  border-radius: var(--border-radius);
+  border: 1px solid var(--color-border);
+  margin-top: 1rem;
+  box-shadow: var(--shadow-soft);
+}
 
+.interactionPrompt {
+  font-family: var(--font-serif);
+  text-align: center;
+  color: var(--color-primary);
+  margin-bottom: 1.5rem;
+  font-size: 1.3rem;
+}
 
+.choicesArea {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.choiceButtonsContainer {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); /* Adjust minmax */
+  gap: 1rem;
+}
+
+.choiceButton {
+  background-color: var(--color-secondary);
+  color: white;
+  padding: 1rem 1.2rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease;
+  text-align: left;
+  font-family: var(--font-sans);
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
+.choiceButton:hover:not(:disabled) {
+  background-color: var(--color-secondary-hover);
+  transform: translateY(-3px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+.choiceButton:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+/* --- Custom Input --- */
 .customInputContainer {
-    margin-top: 1rem;
-    margin-bottom: 1rem;
-    padding: 1.5rem;
-    background-color: rgba(224, 220, 204, 0.2);
-    border-radius: 6px;
-    border: 1px solid #e0dccc;
-    animation: fadeIn 0.3s ease-out;
-  }
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(-10px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-  
-  .customInputLabel {
-    display: block;
-    margin-bottom: 0.8rem;
-    color: #6b5b4b;
-    font-weight: 600;
-    font-size: 0.9rem;
-    text-align: center;
-  }
-  
-  .customInputTextarea {
-    width: 100%;
-    padding: 10px 12px;
-    border: 1px solid #dcd1c0;
-    border-radius: 4px;
-    font-size: 1rem;
-    font-family: 'Nunito', sans-serif;
-    resize: vertical;
-    min-height: 60px;
-    background-color: #fff;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
-  }
-  .customInputTextarea:focus {
-    outline: none;
-    border-color: #a26f5a;
-    box-shadow: 0 0 0 3px rgba(162, 111, 90, 0.15);
-  }
-  .customInputTextarea:disabled {
-    background-color: #eee;
-  }
-  
-  .customInputFooter {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: 0.8rem;
-  }
-  
-  .customInputCounter {
-    font-size: 0.85em;
-    color: #777;
-  }
-  
-  .customInputButton {
-    background-color: #a26f5a;
-    border: none;
-    color: white;
-    padding: 0.6rem 1.2rem;
-    text-align: center;
-    text-decoration: none;
-    font-size: 0.9rem;
-    font-family: 'Nunito', sans-serif;
-    font-weight: 600;
-    cursor: pointer;
-    border-radius: 20px;
-    transition: background-color 0.2s ease, transform 0.1s ease;
-  }
-  .customInputButton:hover:not(:disabled) {
-    background-color: #8c5d4a;
-    transform: translateY(-2px);
-  }
-  .customInputButton:active:not(:disabled) {
-    transform: translateY(0px);
-  }
-  .customInputButton:disabled {
-    background-color: #ccc;
-    cursor: not-allowed;
-    opacity: 0.7;
-  }
-  
-.toggleCustomContainer {
-    text-align: center;
-    margin-top: 1.5rem;
-    padding-top: 1rem;
-    border-top: 1px dashed #e0dccc;
-  }
-  
-  .toggleCustomInputButton {
-    background-color: transparent;
-    border: 1px solid #9f8d7a;
-    color: #8a7967;
-    padding: 0.6rem 1.2rem;
-    text-align: center;
-    text-decoration: none;
-    display: inline-block;
-    font-size: 0.9rem;
-    font-family: 'Nunito', sans-serif;
-    font-weight: 600;
-    cursor: pointer;
-    border-radius: 20px;
-    transition: background-color 0.2s ease, color 0.2s ease;
-  }
-  
-  .toggleCustomInputButton:hover:not(:disabled) {
-    background-color: rgba(159, 141, 122, 0.1);
-    color: #736555;
-  }
-  
-  .toggleCustomInputButton:disabled {
-    border-color: #ccc;
-    color: #aaa;
-    cursor: not-allowed;
-    opacity: 0.7;
-  }
-  .modelSelectors {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-  }
-  
-  .modelSelector {
-    display: flex;
-    flex-direction: column;
-  }
-  
-  .modelSelector label {
-    font-size: 0.85rem;
-    margin-bottom: 0.3rem;
-    font-weight: 600;
-    color: #555;
-  }
-  
-  .modelSelector select {
-    padding: 0.5rem;
-    border-radius: 4px;
-    border: 1px solid #ccc;
-    background-color: white;
-    font-family: 'Nunito', sans-serif;
-    font-size: 0.9rem;
-  }
+  margin: 2rem 0 1rem 0; /* Add more space */
+  padding: 1.5rem;
+  background-color: rgba(224, 213, 196, 0.3); /* Subtle background */
+  border-radius: var(--border-radius);
+  border: 1px dashed var(--color-border);
+}
 
+.customInputLabel {
+  display: block;
+  margin-bottom: 1rem;
+  color: var(--color-primary);
+  font-weight: 700;
+  font-size: 1rem;
+  text-align: center;
+  font-family: var(--font-serif);
+}
+
+.customInputTextarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  font-size: 1rem;
+  font-family: var(--font-sans); /* Use sans-serif for input */
+  resize: vertical;
+  min-height: 80px; /* Slightly taller */
+  background-color: #fff;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.customInputTextarea:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(140, 107, 93, 0.2);
+}
+.customInputTextarea:disabled {
+  background-color: #f0f0f0;
+}
+
+.customInputFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1rem;
+}
+
+.customInputCounter {
+  font-size: 0.8rem;
+  color: var(--color-text-subtle);
+}
+
+.customInputButton { /* Consistent button style */
+  background-color: var(--color-primary);
+  border: none;
+  color: white;
+  padding: 0.7rem 1.5rem;
+  text-align: center;
+  font-size: 0.9rem;
+  font-family: var(--font-sans);
+  font-weight: 700;
+  cursor: pointer;
+  border-radius: 20px; /* Pill shape */
+  transition: background-color 0.2s ease, transform 0.1s ease;
+}
+.customInputButton:hover:not(:disabled) {
+  background-color: var(--color-primary-hover);
+  transform: translateY(-2px);
+}
+.customInputButton:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+/* Toggle Custom Input Button */
+.toggleCustomContainer {
+  text-align: center;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px dashed var(--color-border);
+  display: flex; /* Allow multiple buttons */
+  justify-content: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.toggleCustomInputButton, .completeStoryButton, .retryButton { /* Group similar buttons */
+  background-color: transparent;
+  border: 1px solid var(--color-secondary);
+  color: var(--color-secondary);
+  padding: 0.7rem 1.5rem;
+  text-align: center;
+  font-size: 0.9rem;
+  font-family: var(--font-sans);
+  font-weight: 700;
+  cursor: pointer;
+  border-radius: 20px;
+  transition: background-color 0.2s ease, color 0.2s ease, transform 0.1s ease;
+}
+
+.toggleCustomInputButton:hover:not(:disabled),
+.completeStoryButton:hover:not(:disabled),
+.retryButton:hover:not(:disabled) {
+  background-color: rgba(161, 136, 127, 0.1);
+  color: var(--color-secondary-hover);
+  transform: translateY(-2px);
+}
+
+.toggleCustomInputButton:disabled,
+.completeStoryButton:disabled,
+.retryButton:disabled {
+  border-color: #ccc;
+  color: #aaa;
+  cursor: not-allowed;
+  opacity: 0.7;
+  transform: none;
+}
+
+/* Specific button colors if needed */
 .retryButton {
-    background-color: #778899;
-    border: none;
-    color: white;
-    padding: 0.6rem 1.2rem;
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+.retryButton:hover:not(:disabled) {
+   background-color: rgba(176, 141, 87, 0.1);
+   color: darken(var(--color-accent), 10%);
+}
+
+.completeStoryButton {
+   border-color: var(--color-primary);
+   color: var(--color-primary);
+}
+.completeStoryButton:hover:not(:disabled) {
+   background-color: rgba(140, 107, 93, 0.1);
+   color: var(--color-primary-hover);
+}
+
+/* --- Story Selection / User Stories --- */
+.startContainer {
+  padding: 2rem 1rem;
+}
+
+.startTitle {
+  font-family: var(--font-serif);
+  color: var(--color-primary);
+  text-align: center;
+  margin-bottom: 2.5rem;
+  font-size: 1.8rem;
+}
+
+.taleListContainer, .userStoriesContainer {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); /* Responsive grid */
+}
+
+.startButton, .userStoryCard { /* Shared card style */
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem 2rem;
+  background: var(--color-bg-container);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: var(--shadow-soft);
+}
+
+.startButton:hover, .userStoryCard:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-medium);
+}
+
+.startButton h3, .userStoryCard h3 { /* Title within card */
+  font-family: var(--font-serif);
+  color: var(--color-primary);
+  margin: 0 0 0.5rem 0;
+  font-size: 1.3rem;
+}
+
+.storyDescription, .userStoryCard p {
+  font-size: 0.95rem;
+  color: var(--color-text-subtle);
+  line-height: 1.5;
+  margin-bottom: 0.5rem;
+}
+.userStoryCard p:last-of-type {
+    margin-bottom: 1rem; /* Space before button */
+}
+
+.continueButton, .newStoryButton { /* Buttons within cards/views */
+  align-self: flex-start; /* Align button left */
+  background-color: var(--color-primary);
+  color: white;
+  padding: 0.6rem 1.2rem;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 700;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+  margin-top: auto; /* Pushes button to bottom if card height varies */
+}
+
+.continueButton:hover, .newStoryButton:hover {
+  background-color: var(--color-primary-hover);
+  transform: translateY(-2px);
+}
+
+.newStoryButton { /* For the button outside the grid */
+   margin-top: 2rem;
+   align-self: center; /* Center this one */
+   padding: 0.8rem 1.8rem;
+}
+
+.noStoriesContainer {
     text-align: center;
-    text-decoration: none;
-    display: inline-block;
-    font-size: 0.9rem;
-    font-family: 'Nunito', sans-serif;
-    font-weight: 600;
-    cursor: pointer;
-    border-radius: 20px;
-    transition: background-color 0.2s ease, transform 0.1s ease;
+    padding: 2rem;
+    color: var(--color-text-subtle);
+}
+.noStoriesContainer .startButton { /* Reuse start button style */
+    margin: 1.5rem auto 0 auto; /* Center button */
+    max-width: 300px;
+    cursor: pointer; /* Ensure cursor indicates clickability */
+}
+.noStoriesContainer .startButton:hover {
+    transform: translateY(-5px); /* Add hover effect */
+    box-shadow: var(--shadow-medium);
+}
+
+
+/* --- Debug Panel --- */
+.debugPanel {
+  position: fixed; /* Keep fixed */
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 300px;
+  background: #ffffff;
+  padding: 1.5rem;
+  overflow-y: auto;
+  box-shadow: -4px 0 15px rgba(0, 0, 0, 0.1);
+  border-left: 1px solid #eee;
+  z-index: 100; /* Above book */
+  font-size: 0.9rem;
+}
+
+.debugSection {
+  margin-bottom: 1.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid #eee;
+}
+.debugSection:last-child {
+  border-bottom: none;
+}
+
+.debugSection h4 {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  color: var(--color-primary);
+  margin: 0 0 1rem 0;
+  font-size: 1rem;
+}
+
+/* Model Selectors */
+.modelSelectors { display: flex; flex-direction: column; gap: 1rem; }
+.modelSelector label { font-size: 0.85rem; margin-bottom: 0.3rem; font-weight: 600; color: #555; }
+.modelSelector select {
+  width: 100%;
+  padding: 0.6rem;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  background-color: white;
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+}
+
+/* Temperature Slider */
+.temperatureControl { margin: 0.5rem 0 1rem 0; }
+.sliderContainer { width: 100%; }
+.slider {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 8px;
+  border-radius: 5px;
+  background: linear-gradient(to right, #a1c4fd, #ff9a9e); /* Softer gradient */
+  outline: none;
+  opacity: 0.8;
+  transition: opacity .2s;
+  cursor: pointer;
+}
+.slider:hover { opacity: 1; }
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--color-primary); /* Use theme color */
+  cursor: pointer;
+  border: 3px solid white;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+}
+.slider::-moz-range-thumb {
+  width: 18px; height: 18px; border-radius: 50%;
+  background: var(--color-primary); cursor: pointer;
+  border: 3px solid white; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+}
+.sliderLabels { display: flex; justify-content: space-between; margin-top: 8px; font-size: 0.75rem; color: #666; }
+.sliderLabels span:nth-child(2) { /* Value */
+  font-weight: bold; color: var(--color-text-main); font-size: 0.85rem;
+  background-color: #f0f0f0; border-radius: 3px; padding: 1px 6px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* Prompt Textareas (If uncommented) */
+.promptToggle { margin-bottom: 0.5rem; }
+.promptToggle label { display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.9rem; }
+.promptEditor { margin-top: 0.5rem; margin-bottom: 1rem; }
+.systemPromptTextarea {
+  width: 100%; padding: 0.8rem; border: 1px solid #ddd; border-radius: 4px;
+  resize: vertical; font-family: monospace; font-size: 0.85rem; min-height: 100px;
+}
+
+/* Raw Response & State */
+.rawResponseDisplay {
+  background: #f8f8f8; padding: 0.8rem; border-radius: 4px;
+  max-height: 250px; overflow-y: auto; font-size: 0.8rem;
+  white-space: pre-wrap; word-break: break-all; border: 1px solid #eee;
+}
+.stateDisplay div { margin-bottom: 0.5rem; }
+.stateDisplay strong { color: var(--color-text-main); }
+.summaryDisplay { margin-top: 0.8rem; }
+.summaryText {
+  background: #f8f8f8; padding: 0.5rem; border-radius: 4px; font-size: 0.85rem;
+  max-height: 100px; overflow-y: auto; border: 1px solid #eee;
+}
+
+/* --- Utility & Feedback --- */
+.loadingContainer { /* Centered loading */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1rem;
+  min-height: 150px; /* Ensure space */
+  text-align: center;
+  color: var(--color-text-subtle);
+}
+
+.loadingSpinner /* Add a spinner SVG or animation here */ {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(140, 107, 93, 0.2); /* Light primary */
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loadingText {
+  font-style: italic;
+  font-family: var(--font-serif);
+  font-size: 1.1rem;
+}
+
+.errorContainer { /* Container for errors + retry */
+  padding: 1rem;
+  background-color: var(--color-error-bg);
+  border: 1px solid darken(var(--color-error-bg), 10%);
+  border-radius: var(--border-radius);
+  margin-bottom: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  align-items: center;
+}
+
+.errorText, .llmErrorText { /* Shared error text style */
+  color: var(--color-error-text);
+  text-align: center;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+.llmErrorText { /* Maybe slightly different styling */
+  font-style: italic;
+}
+
+.endMessage {
+  text-align: center;
+  font-family: var(--font-serif);
+  color: var(--color-text-subtle);
+  padding: 2rem;
+  font-size: 1.2rem;
+  font-style: italic;
+}
+
+/* --- Book Opening Animation Placeholder --- */
+.bookCover {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: var(--color-primary); /* Cover color */
+  z-index: 50; /* Above content, below header */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  font-family: var(--font-serif);
+  font-size: 2rem;
+  transform-origin: left center; /* For opening animation */
+}
+
+
+/* --- Responsive --- */
+@media (max-width: 1200px) {
+  .bookContainer.withDebugPanel {
+    margin-right: 0; /* Stack debug panel below */
   }
-  
-  .retryButton:hover:not(:disabled) {
-    background-color: #5a6876;
-    transform: translateY(-1px);
+  .debugPanel {
+    position: relative; /* Change from fixed */
+    width: 100%;
+    margin-top: 2rem;
+    box-shadow: none;
+    border-top: 2px solid #eee;
   }
-  
-  .retryButton:disabled {
-    background-color: #ccc;
-    cursor: not-allowed;
-    opacity: 0.7;
+}
+
+@media (max-width: 768px) {
+  .bookContainer {
+    padding: 1.5rem;
+    margin: 1rem;
   }
-    
+  .headerArea {
+    flex-direction: column;
+    gap: 1.5rem;
+    align-items: flex-start;
+  }
+  .title { font-size: 1.8rem; }
+  .navButtons { flex-wrap: wrap; justify-content: flex-start; }
+  .storyArea { max-height: 50vh; }
+  .choiceButtonsContainer { grid-template-columns: 1fr; } /* Stack choices */
+  .authContainer { margin: 2rem 1rem; padding: 2rem; }
+}
