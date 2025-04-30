@@ -206,20 +206,22 @@
 
 /* Story Display Area */
 .storyArea {
-  background: transparent; /* Use book background */
-  padding: 1rem 0; /* Adjust padding */
-  min-height: 300px;
-  max-height: 60vh;
-  overflow: hidden;
-  margin-bottom: 2rem;
-  /* Custom scrollbar (optional) */
-  scrollbar-width: thin;
-  scrollbar-color: var(--color-secondary) var(--color-bg-page);
-}
-.storyArea::-webkit-scrollbar { width: 8px; }
-.storyArea::-webkit-scrollbar-track { background: var(--color-bg-page); border-radius: 4px; }
-.storyArea::-webkit-scrollbar-thumb { background-color: var(--color-secondary); border-radius: 4px; border: 2px solid var(--color-bg-page); }
-
+    background: transparent;
+    padding: 1rem 0;
+    /* *** CRITICAL: Ensure max-height is set *** */
+    max-height: 60vh; /* Or your desired height */
+    /* *** CRITICAL: Ensure overflow-y allows scrolling *** */
+    overflow-y: auto; /* 'auto' shows scrollbar only when needed, 'scroll' always shows it */
+    overflow-x: hidden; /* Prevent horizontal scrolling */
+    margin-bottom: 2rem;
+    /* Custom scrollbar styles (keep if you like them) */
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-secondary) var(--color-bg-page);
+    /* Remove overflow: hidden if it was added here previously */
+  }
+  .storyArea::-webkit-scrollbar { width: 8px; }
+  .storyArea::-webkit-scrollbar-track { background: var(--color-bg-page); border-radius: 4px; }
+  .storyArea::-webkit-scrollbar-thumb { background-color: var(--color-secondary); border-radius: 4px; border: 2px solid var(--color-bg-page); }
 
 .storyText {
     font-family: var(--font-serif);
