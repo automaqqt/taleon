@@ -478,8 +478,8 @@ export default function AdminPage() {
                   <option value="Russian">Russian</option>
                   <option value="Ukrainian">Ukrain</option>
                   <option value="Portuguese">Portuges</option>
-                  <option value="Japan">Japan</option>
-                  <option value="China">China</option>
+                  <option value="Japanese">Japan</option>
+                  <option value="Chinese">China</option>
                 </select>
               </div>
               
@@ -571,6 +571,11 @@ export default function AdminPage() {
                   <option value="English">English</option>
                   <option value="Français">French</option>
                   <option value="Español">Spanish</option>
+                  <option value="Russian">Russian</option>
+                  <option value="Ukrainian">Ukrain</option>
+                  <option value="Portuguese">Portuges</option>
+                  <option value="Japanese">Japan</option>
+                  <option value="Chinese">China</option>
                 </select>
               </div>
               
