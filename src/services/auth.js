@@ -48,7 +48,7 @@ async function apiCall(endpoint, method = 'GET', data = null, auth = null) {
     } catch (e) {
         // If JSON parsing fails but status is OK (e.g., 200 with empty body), treat as success? Or specific error?
         if (response.ok) {
-             console.warn(`API call to ${method} ${endpoint} returned OK status (${response.status}) but failed JSON parsing. Assuming success with no data.`);
+             console.warn(`API call to ${method} ${endpoint} returned OK status (${response.status}) but failed JSON parsing. Assuming success with no data. error ${e}`);
              return { success: true, data: null }; // Or handle as needed
         }
         // If not OK and JSON fails, throw based on status text
