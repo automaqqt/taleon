@@ -205,7 +205,7 @@ export default function AdminPage() {
     try {
       // Pass the full form state, including story_type_id
       const result = await authService.adminUpdateBaseStory(selectedBaseStory.id, baseStoryForm, adminCredentials);
-      if (result && result.success) {
+      if (result.title) {
         setSuccessMessage(`Successfully updated "${result.title}" base story!`);
         setTimeout(() => { loadBaseStories(); setActiveView('baseStories'); setSuccessMessage(null); }, 1500);
       } else {
@@ -274,7 +274,7 @@ export default function AdminPage() {
       setIsLoading(true); setError(null); setSuccessMessage(null);
       try {
           const result = await authService.adminUpdateStoryType(selectedStoryType.id, storyTypeForm, adminCredentials);
-          if (result && result.success) {
+          if (result.name) {
               setSuccessMessage(`Successfully updated "${result.name}" story type!`);
               setTimeout(() => { loadStoryTypes(); setActiveView('storyTypesList'); setSuccessMessage(null); }, 1500);
           } else {
