@@ -27,6 +27,7 @@ export default function AdminPage() {
   const [storyTypes, setStoryTypes] = useState([]); // NEW: List of all story types
   const [selectedStoryType, setSelectedStoryType] = useState(null); // NEW: For editing
   const [allAvailablePrompts, setAllAvailablePrompts] = useState([]); // NEW: For assignment dropdown
+  const [selectedPrompt, setSelectedPrompt] = useState(null);
 
   // --- Form State ---
   const [baseStoryForm, setBaseStoryForm] = useState({
@@ -74,7 +75,9 @@ export default function AdminPage() {
           loadStoryTypes(); // Load types for dropdowns later
       } else if (activeView === 'storyTypesList') {
           loadStoryTypes();
-      }
+      } else if (activeView === 'promptList') { // <-- ADDED
+        loadAllPrompts();
+     }
     } else {
       router.push('/'); // Redirect if not admin
     }
@@ -106,6 +109,101 @@ export default function AdminPage() {
       }
   }
 
+  async function loadAllPrompts() {
+    if (!adminCredentials) return;
+    // Avoid reloading if already loaded and not explicitly needed? Optional optimization.
+    // if (allAvailablePrompts.length > 0 && !forceReload) return;
+    setIsLoading(true); setError(null);
+    try {
+        const prompts = await authService.adminGetAllStoryPrompts(adminCredentials);
+        setAllAvailablePrompts(prompts);
+    } catch (err) {
+        setError(`Failed to load all prompts: ${err.message}`);
+    } finally {
+        setIsLoading(false);
+    }
+}
+
+  async function loadPromptDetails(promptId) {
+    if (!adminCredentials) return;
+    setIsLoading(true); setError(null);
+    try {
+        const promptDetails = await authService.adminGetStoryPromptDetails(promptId, adminCredentials);
+        setSelectedPrompt(promptDetails); // Store the full prompt being edited
+
+        // Populate the form state
+        setPromptForm({
+            name: promptDetails.name,
+            system_prompt: promptDetails.system_prompt,
+            turn_start: promptDetails.turn_start,
+            // Handle null correctly when setting the form value
+            turn_end: promptDetails.turn_end === null ? '' : promptDetails.turn_end
+        });
+
+        setActiveView('editPrompt'); // Switch to the edit view
+    } catch (err) {
+        setError(`Failed to load prompt details: ${err.message}`);
+    } finally {
+        setIsLoading(false);
+    }
+}
+
+async function handleUpdatePrompt(e) {
+  e.preventDefault();
+  if (!adminCredentials || !selectedPrompt) return;
+  setIsLoading(true); setError(null); setSuccessMessage(null);
+  const updateData = { /* ... prepare data ... */
+      ...promptForm,
+      turn_end: promptForm.turn_end === '' ? null : parseInt(promptForm.turn_end, 10)
+  };
+  try {
+      const result = await authService.adminUpdateStoryPrompt(selectedPrompt.id, updateData, adminCredentials); // Ensure correct function name
+      if (result) {
+          setSuccessMessage(`Successfully updated prompt "${result.name}"!`);
+          setTimeout(() => {
+              setSuccessMessage(null);
+              // Navigate back intelligently
+              if (selectedStoryType) { // If editing context was a StoryType
+                  loadStoryTypeDetails(selectedStoryType.id);
+              } else { // Otherwise, assume we came from the prompt list
+                  navigateToPromptList(); // Go back to the prompt list view
+              }
+          }, 1500);
+      } else { setError("Failed to update prompt."); }
+  } catch (err) { setError(`Failed to update prompt: ${err.message}`); }
+  finally { setIsLoading(false); }
+}
+
+const handleDeletePrompt = async (promptId, promptName) => {
+  if (!adminCredentials) return;
+  // Determine where to navigate back to *before* confirmation potentially clears state
+  const cameFromStoryTypeEdit = !!selectedStoryType; // Check if we were editing a story type
+
+  if (window.confirm(`!!! DESTRUCTIVE ACTION !!!\n\nAre you sure you want to permanently delete the PROMPT "${promptName}" (ID: ${promptId})?\n\nThis cannot be undone and will remove it from ALL Story Types it's assigned to.`)) {
+      setIsLoading(true); setError(null); setSuccessMessage(null);
+      try {
+          await authService.adminDeleteStoryPrompt(promptId, adminCredentials);
+          setSuccessMessage(`Prompt "${promptName}" deleted successfully.`);
+
+          if (selectedPrompt?.id === promptId) { setSelectedPrompt(null); setPromptForm({ name: '', system_prompt: '', turn_start: 0, turn_end: null }); }
+
+          setTimeout(() => {
+              setSuccessMessage(null);
+              if (cameFromStoryTypeEdit && selectedStoryType) {
+                  // If deleted while editing a story type, reload that type's details
+                  loadStoryTypeDetails(selectedStoryType.id);
+              } else {
+                  // Otherwise (deleted from list or from edit prompt page without story type context), refresh the main prompt list
+                  loadAllPrompts(); // Refresh the list data
+                  setActiveView('promptList'); // Ensure we are on the list view
+              }
+          }, 2000);
+      } catch (err) {
+          setError(`Failed to delete prompt: ${err.message}`);
+          setIsLoading(false);
+      }
+  }
+};
   async function loadAllPrompts() {
        if (!adminCredentials) return;
        setIsLoading(true); setError(null);
@@ -314,8 +412,7 @@ export default function AdminPage() {
        }
        // No finally for isLoading here, handled by navigation/error path
     }};
-  // handleDeletePrompt (Now removes from StoryType) - This logic is handled in handleRemovePromptFromType
-  const handleDeletePrompt = async (promptId, promptName) => { /* ... keep existing, but call the correct API ... */ };
+    
 
   // NEW: Delete Story Type
   const handleDeleteStoryType = async (typeId, typeName) => {
@@ -420,6 +517,13 @@ export default function AdminPage() {
       setActiveView('createStoryType');
   };
 
+  const navigateToPromptList = () => {
+    setActiveView('promptList');
+    setSelectedPrompt(null); // Clear selection when going to the list
+    setSelectedStoryType(null); // Clear story type context
+    setSelectedBaseStory(null); // Clear base story context
+    loadAllPrompts(); // Load/refresh the list
+};
 
   // --- Render Logic ---
   if (!isAuthenticated || !isAdmin) {
@@ -442,7 +546,7 @@ export default function AdminPage() {
           {/* Story Type Nav */}
           <button className={`${styles.navButton} ${activeView === 'storyTypesList' ? styles.active : ''}`} onClick={navigateToStoryTypes}>Story Types</button>
           {/* Prompt Nav */}
-          <button className={styles.navButton} onClick={navigateToCreatePrompt}>Create New Prompt</button>
+          <button className={`${styles.navButton} ${activeView === 'promptList' ? styles.active : ''}`} onClick={navigateToPromptList}>Manage Prompts</button> {/* Renamed */}
           {/* Logout */}
           <button className={styles.logoutButton} onClick={() => { authService.logout(); router.push('/'); }}>Logout</button>
         </div>
@@ -682,17 +786,36 @@ export default function AdminPage() {
                </form>
 
                {/* --- Assigned Prompts Section --- */}
+               {/* --- Assigned Prompts Section --- */}
                <div className={styles.promptsSection}>
                    <h3>Assigned Story Prompts</h3>
                    {storyPrompts && storyPrompts.length > 0 ? (
                        <div className={styles.promptsList}>
                            {storyPrompts.map(prompt => (
                                <div key={prompt.id} className={styles.promptItem}>
-                                   <div className={styles.promptHeader}><h4>{prompt.name}</h4>
-                                      <button onClick={() => handleRemovePromptFromType(prompt.id, prompt.name)} className={styles.deleteButtonSmall} title="Remove from this Story Type" disabled={isLoading}>Remove</button>
+                                   <div className={styles.promptHeader}>
+                                      <h4>{prompt.name}</h4>
+                                      {/* Action Buttons for each prompt */}
+                                      <div className={styles.promptItemActions}>
+                                          <button
+                                              onClick={() => loadPromptDetails(prompt.id)} // <-- EDIT BUTTON
+                                              className={styles.editButton} // Reuse edit button style
+                                              style={{marginRight: '0.5rem'}} // Add some margin
+                                              disabled={isLoading}
+                                          >
+                                              Edit
+                                          </button>
+                                          <button
+                                              onClick={() => handleRemovePromptFromType(prompt.id, prompt.name)}
+                                              className={styles.deleteButtonSmall} // Reuse delete style
+                                              title="Remove from this Story Type"
+                                              disabled={isLoading}
+                                          >
+                                              Remove
+                                          </button>
+                                      </div>
                                    </div>
                                    <p>Turns: {prompt.turn_start} - {prompt.turn_end ?? 'End'}</p>
-                                   <details><summary>View Prompt Text</summary><pre className={styles.promptTextDisplay}>{prompt.system_prompt}</pre></details>
                                </div>
                            ))}
                        </div>
@@ -725,63 +848,90 @@ export default function AdminPage() {
             </div>
         )}
 
-        {/* --- VIEW: Create Prompt --- */}
-        {activeView === 'createPrompt' && (
-  <div className={styles.formContainer}>
-    <h2>Create New Story Prompt</h2>
-    <form onSubmit={handleCreatePrompt}>
-      <div className={styles.formGroup}>
-        <label htmlFor="prompt_name">Prompt Name *</label> {/* Ensure htmlFor matches id */}
-        <input
-          type="text"
-          id="prompt_name"       // Use a unique ID if 'name' is used elsewhere
-          name="name"            // This MUST match the key in promptForm state
-          value={promptForm.name} // Correct binding?
-          onChange={handlePromptFormChange}
-          required
-        />
-      </div>
-      <div className={styles.formRow}>
-         <div className={styles.formGroup}>
-            <label htmlFor="prompt_turn_start">Starting Turn *</label>
-            <input
-               type="number"
-               id="prompt_turn_start"
-               name="turn_start"     // Correct key?
-               value={promptForm.turn_start} // Correct binding?
-               onChange={handlePromptFormChange}
-               min="0"
-               required
-            />
-         </div>
-         <div className={styles.formGroup}>
-            <label htmlFor="prompt_turn_end">Ending Turn (optional)</label>
-            <input
-               type="number"
-               id="prompt_turn_end"
-               name="turn_end"       // Correct key?
-               // Handle null correctly for display
-               value={promptForm.turn_end === null ? '' : promptForm.turn_end}
-               onChange={handlePromptFormChange}
-               min={promptForm.turn_start >= 0 ? promptForm.turn_start : 0} // Ensure min is valid
-               placeholder="No end"
-            />
-         </div>
-      </div>
-      <div className={styles.formGroup}>
-        <label htmlFor="prompt_system_prompt">System Prompt *</label>
-        <textarea
-          id="prompt_system_prompt"
-          name="system_prompt" // Correct key?
-          value={promptForm.system_prompt} // Correct binding?
-          onChange={handlePromptFormChange}
-          rows="15"
-          required
-        />
-        {/* ... */}
-      </div><div className={styles.formActions}>
+       {/* --- VIEW: Create Prompt --- */}
+       {activeView === 'createPrompt' && (
+            <div className={styles.formContainer}>
+                <h2>Create New Story Prompt</h2>
+                {/* The form here is reused for the edit view */}
+                <form onSubmit={handleCreatePrompt}>
+                   <div className={styles.formGroup}><label htmlFor="prompt_name">Prompt Name *</label><input type="text" id="prompt_name" name="name" value={promptForm.name} onChange={handlePromptFormChange} required /></div>
+                    <div className={styles.formRow}>
+                      <div className={styles.formGroup}><label htmlFor="prompt_turn_start">Starting Turn *</label><input type="number" id="prompt_turn_start" name="turn_start" value={promptForm.turn_start} onChange={handlePromptFormChange} min="0" required /></div>
+                      <div className={styles.formGroup}><label htmlFor="prompt_turn_end">Ending Turn (optional)</label><input type="number" id="prompt_turn_end" name="turn_end" value={promptForm.turn_end === null ? '' : promptForm.turn_end} onChange={handlePromptFormChange} min={promptForm.turn_start >= 0 ? promptForm.turn_start : 0} placeholder="No end" /></div>
+                    </div>
+                    <div className={styles.formGroup}><label htmlFor="prompt_system_prompt">System Prompt *</label><textarea id="prompt_system_prompt" name="system_prompt" value={promptForm.system_prompt} onChange={handlePromptFormChange} rows="15" required /></div>
+                    <div className={styles.formActions}>
                        <button type="button" className={styles.cancelButton} onClick={() => selectedStoryType ? setActiveView('editStoryType') : navigateToStoryTypes()}>Cancel</button>
                        <button type="submit" className={styles.submitButton} disabled={isLoading}>Create Prompt</button>
+                    </div>
+                </form>
+            </div>
+        )}
+
+        {/* --- NEW VIEW: Prompt List --- */}
+        {activeView === 'promptList' && (
+            <div className={styles.promptListView}> {/* Optional specific class */}
+                <h2>Available Story Prompts</h2>
+                {allAvailablePrompts.length === 0 && !isLoading ? (
+                    <p>No story prompts found. Create one to get started!</p>
+                ) : (
+                    <div className={styles.storiesGrid}> {/* Reuse grid style */}
+                        {allAvailablePrompts.map(prompt => (
+                            <div key={prompt.id} className={styles.storyCard}> {/* Reuse card style */}
+                                <h3>{prompt.name}</h3>
+                                <p>Turns: {prompt.turn_start} - {prompt.turn_end ?? 'End'}</p>
+                                {/* Maybe show snippet of prompt text? Optional */}
+                                {/* <details><summary>View Prompt Text</summary><pre className={styles.promptTextDisplay}>{prompt.system_prompt}</pre></details> */}
+                                <div className={styles.storyActions}>
+                                    <button
+                                        className={styles.editButton}
+                                        onClick={() => loadPromptDetails(prompt.id)}
+                                        disabled={isLoading}
+                                    >
+                                        Edit
+                                    </button>
+                                    <button
+                                        className={styles.deleteButtonSmall} // Use small delete style
+                                        onClick={() => handleDeletePrompt(prompt.id, prompt.name)}
+                                        disabled={isLoading}
+                                    >
+                                        Delete
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+                 <button className={styles.submitButton} style={{marginTop: '20px'}} onClick={navigateToCreatePrompt}>Create New Prompt</button>
+            </div>
+        )}
+
+        {/* --- NEW VIEW: Edit Prompt --- */}
+        {activeView === 'editPrompt' && selectedPrompt && (
+            <div className={styles.formContainer}>
+                <h2>Edit Story Prompt: {selectedPrompt.name}</h2>
+                {/* Reuses the same form structure and state as Create Prompt */}
+                <form onSubmit={handleUpdatePrompt}> {/* Calls handleUpdatePrompt */}
+                   <div className={styles.formGroup}><label htmlFor="prompt_name">Prompt Name *</label><input type="text" id="prompt_name" name="name" value={promptForm.name} onChange={handlePromptFormChange} required /></div>
+                    <div className={styles.formRow}>
+                      <div className={styles.formGroup}><label htmlFor="prompt_turn_start">Starting Turn *</label><input type="number" id="prompt_turn_start" name="turn_start" value={promptForm.turn_start} onChange={handlePromptFormChange} min="0" required /></div>
+                      <div className={styles.formGroup}><label htmlFor="prompt_turn_end">Ending Turn (optional)</label><input type="number" id="prompt_turn_end" name="turn_end" value={promptForm.turn_end === null ? '' : promptForm.turn_end} onChange={handlePromptFormChange} min={promptForm.turn_start >= 0 ? promptForm.turn_start : 0} placeholder="No end" /></div>
+                    </div>
+                    <div className={styles.formGroup}><label htmlFor="prompt_system_prompt">System Prompt *</label><textarea id="prompt_system_prompt" name="system_prompt" value={promptForm.system_prompt} onChange={handlePromptFormChange} rows="15" required /></div>
+                    <div className={styles.formActions}>
+                       {/* Navigate back intelligently */}
+                       <button type="button" className={styles.cancelButton} onClick={() => selectedStoryType ? setActiveView('editStoryType') : navigateToStoryTypes()}>Cancel</button>
+                       <button type="submit" className={styles.submitButton} disabled={isLoading}>Update Prompt</button>
+                       {/* Optional: Add Delete button here too */}
+                        <button
+                            type="button"
+                            onClick={() => handleDeletePrompt(selectedPrompt.id, selectedPrompt.name)}
+                            className={styles.deleteButtonSmall} // Reuse style or create new
+                            style={{marginLeft: 'auto'}} // Push delete to the left
+                            disabled={isLoading}
+                        >
+                            Delete This Prompt
+                        </button>
                     </div>
                 </form>
             </div>

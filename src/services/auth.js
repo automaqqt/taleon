@@ -258,4 +258,23 @@ export function getAdminCredentials() {
   return null; // Not logged in or not an admin
 }
 
-// --- END OF COMPLETE services/auth.js ---
+/**
+ * Get details of a specific story prompt (admin only)
+ * @param {string} promptId - Prompt ID
+ * @param {object} auth - Authentication credentials { username, password }
+ * @returns {Promise<Object>} Prompt details
+ */
+export async function adminGetStoryPromptDetails(promptId, auth) {
+    return apiCall(`/admin/story-prompts/${promptId}`, 'GET', null, auth);
+ }
+ 
+ /**
+  * Update an existing story prompt (admin only)
+  * @param {string} promptId - Prompt ID
+  * @param {object} promptData - Updated prompt data (name, system_prompt, etc.)
+  * @param {object} auth - Authentication credentials { username, password }
+  * @returns {Promise<Object>} Updated prompt details
+  */
+ export async function adminUpdateStoryPrompt(promptId, promptData, auth) {
+   return apiCall(`/admin/story-prompts/${promptId}`, 'PUT', promptData, auth);
+ }

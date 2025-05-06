@@ -13,7 +13,7 @@ logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(leve
 logger = logging.getLogger(__name__)
 
 # Configuration constants
-SUMMARIZE_TURN_INTERVAL = 5 # Example value
+SUMMARIZE_TURN_INTERVAL = 3 # Example value
 MAX_HISTORY_FOR_PROMPT = 10
 
 # Default values

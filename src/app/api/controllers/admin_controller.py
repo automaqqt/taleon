@@ -16,7 +16,7 @@ from ....database.db_utils import (
     # StoryPrompt related
     create_story_prompt, delete_story_prompt, db_get_all_story_prompts,
     # StoryType related
-    create_story_type, get_story_type, get_all_story_types, update_story_type, delete_story_type,
+    create_story_type, get_story_prompt, get_story_type, get_all_story_types, update_story_prompt, update_story_type, delete_story_type,
     assign_prompt_to_story_type, remove_prompt_from_story_type,
     # User/Auth related
     # REMOVE authenticate_user import here if only used for the dependency previously
@@ -64,6 +64,15 @@ class StoryTypeCreateRequest(StoryTypeBase):
 
 class StoryTypeUpdateRequest(StoryTypeBase):
     pass # All fields are updatable
+
+class StoryPromptDetailResponse(StoryPromptRequest): # Reuse fields from request
+    id: str
+    # Add created_at/updated_at if desired
+    # created_at: datetime
+    # updated_at: datetime
+
+    class Config:
+        from_attributes = True
 
 class StoryPromptSimple(BaseModel): # For nested display
     id: str
@@ -439,6 +448,22 @@ async def admin_remove_prompt_from_type_endpoint(story_type_id: str, prompt_id: 
     if not success:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Failed to remove prompt assignment. Check if the assignment exists.")
     return {"success": True}
+
+@router.get("/story-prompts/{prompt_id}", response_model=StoryPromptDetailResponse)
+async def admin_get_single_story_prompt(prompt_id: str):
+    """Gets details for a single Story Prompt (admin only)"""
+    prompt = get_story_prompt(prompt_id)
+    if not prompt:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Story Prompt not found")
+    return prompt
+
+@router.put("/story-prompts/{prompt_id}", response_model=StoryPromptDetailResponse)
+async def admin_update_story_prompt(prompt_id: str, request: StoryPromptRequest):
+    """Updates an existing Story Prompt (admin only)"""
+    updated_prompt = update_story_prompt(prompt_id, **request.dict())
+    if not updated_prompt:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Story Prompt not found or update failed")
+    return updated_prompt
 
 
 # === REMOVED Endpoints ===

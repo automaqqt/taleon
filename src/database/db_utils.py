@@ -647,4 +647,42 @@ def remove_prompt_from_story_type(prompt_id: str, story_type_id: str) -> bool:
             db.rollback()
             return False
 
+def get_story_prompt(prompt_id: str) -> Optional[StoryPrompt]:
+    """Gets a single StoryPrompt by its ID."""
+    with get_db() as db:
+        # No relationships typically needed just for editing the prompt itself
+        return db.query(StoryPrompt).filter(StoryPrompt.id == prompt_id).first()
+
+def update_story_prompt(prompt_id: str, **updates: Any) -> Optional[StoryPrompt]:
+    """Updates attributes of an existing StoryPrompt."""
+    with get_db() as db:
+        prompt = db.query(StoryPrompt).filter(StoryPrompt.id == prompt_id).first()
+        if not prompt:
+            logger.warning(f"Update failed: StoryPrompt {prompt_id} not found.")
+            return None
+
+        updated = False
+        allowed_updates = ['name', 'system_prompt', 'turn_start', 'turn_end'] # Define updatable fields
+        for key, value in updates.items():
+            if key in allowed_updates:
+                # Basic type validation could be added here if needed
+                setattr(prompt, key, value)
+                updated = True
+            else:
+                logger.warning(f"Attempted to update non-allowed attribute '{key}' on StoryPrompt {prompt_id}")
+
+        if updated:
+            try:
+                db.commit()
+                db.refresh(prompt)
+                logger.info(f"Updated StoryPrompt: {prompt.name} (ID: {prompt_id})")
+                return prompt
+            except Exception as e:
+                logger.exception(f"Error committing StoryPrompt update for {prompt_id}")
+                db.rollback()
+                return None
+        else:
+            logger.info(f"No valid attributes provided for update on StoryPrompt {prompt_id}")
+            return prompt # Return existing object if no changes applied
+
 # --- END OF FILE database/db_utils.py ---
