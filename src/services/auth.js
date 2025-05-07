@@ -278,3 +278,21 @@ export async function adminGetStoryPromptDetails(promptId, auth) {
  export async function adminUpdateStoryPrompt(promptId, promptData, auth) {
    return apiCall(`/admin/story-prompts/${promptId}`, 'PUT', promptData, auth);
  }
+
+ /**
+ * Get application log lines (admin only)
+ * @param {object} auth - Authentication credentials { username, password }
+ * @returns {Promise<object>} Object containing log lines { lines: string[] }
+ */
+export async function adminGetLogs(auth) {
+    // GET request, auth handled by header in apiCall helper
+    const response = await apiCall(`/admin/logs`, 'GET', null, auth);
+    // Ensure the response structure matches { lines: [...] }
+    if (response && Array.isArray(response.lines)) {
+        return response;
+    } else {
+        console.error("Invalid log response structure:", response);
+        // Return a default structure on error to prevent frontend crashes
+        return { lines: ["Error: Failed to retrieve valid log data."] };
+    }
+ }

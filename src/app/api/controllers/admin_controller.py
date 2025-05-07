@@ -1,6 +1,7 @@
 # --- START OF UPDATED controllers/admin_controller.py ---
 
 import logging
+import os
 from fastapi import APIRouter, HTTPException, Depends, Response, status, Body, Security
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from typing import List, Dict, Any, Optional
@@ -64,6 +65,9 @@ class StoryTypeCreateRequest(StoryTypeBase):
 
 class StoryTypeUpdateRequest(StoryTypeBase):
     pass # All fields are updatable
+
+class LogResponse(BaseModel):
+    lines: list[str] # List of strings
 
 class StoryPromptDetailResponse(StoryPromptRequest): # Reuse fields from request
     id: str
@@ -154,6 +158,10 @@ async def get_current_admin_user(credentials: HTTPBasicCredentials = Depends(sec
 
 
 # --- Create Router ---
+
+LOG_FILE_NAME = "output.log" # Define log file name
+MAX_LOG_LINES = 1000 # Max lines to return
+
 router = APIRouter(
     prefix="/admin", # Add prefix for all admin routes
     tags=["Admin"], # Group in Swagger UI
@@ -465,6 +473,42 @@ async def admin_update_story_prompt(prompt_id: str, request: StoryPromptRequest)
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Story Prompt not found or update failed")
     return updated_prompt
 
+@router.get("/logs", response_model=LogResponse)
+async def admin_get_application_logs():
+    """Retrieves the last N lines of the application's log file (admin only)."""
+    try:
+        # Construct the path relative to the project root (adjust if needed)
+        # This assumes the script runs from a location where '../..' correctly points to the project root
+        # A more robust solution might use environment variables or configuration
+        project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..', '..'))
+        log_file_path = os.path.join(project_root, LOG_FILE_NAME)
+
+        logger.info(f"Attempting to read logs from: {log_file_path}")
+
+        if not os.path.exists(log_file_path):
+            logger.warning(f"Log file not found at: {log_file_path}")
+            # Return empty list instead of 404? Or 404? Let's return empty for simplicity.
+            # raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Log file not found.")
+            return LogResponse(lines=[f"ERROR: Log file not found at expected location: {log_file_path}"])
+
+        lines = []
+        with open(log_file_path, 'r', encoding='utf-8', errors='ignore') as f:
+            # WARNING: readlines() can be inefficient for very large files.
+            # Consider chunked reading from the end for production systems.
+            all_lines = f.readlines()
+            # Get the last MAX_LOG_LINES lines
+            lines = [line.strip() for line in all_lines[-MAX_LOG_LINES:]] # Strip whitespace
+
+        logger.info(f"Returning last {len(lines)} lines from {LOG_FILE_NAME}.")
+        return LogResponse(lines=lines)
+
+    except FileNotFoundError:
+         logger.error(f"Log file not found error during read attempt (should have been caught by os.path.exists?): {log_file_path}")
+         return LogResponse(lines=[f"ERROR: Log file could not be opened at: {log_file_path}"])
+    except Exception as e:
+        logger.exception(f"Failed to read log file: {log_file_path}")
+        # Don't expose raw error details usually, but okay for admin view maybe
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to read log file: {str(e)}")
 
 # === REMOVED Endpoints ===
 # Removed /admin/assign-prompt (replaced by /admin/story-types/assign-prompt)

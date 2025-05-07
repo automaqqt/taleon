@@ -512,3 +512,114 @@
     border: 1px solid #bde0fe;
     font-size: 0.95rem;
   }
+
+  /* --- Log Viewer Styles --- */
+/* --- Log Viewer Styles --- */
+.logViewFullWidthWrapper {
+    width: 100%;
+    padding: 2rem 1rem; /* Add padding similar to adminMain's vertical margin/padding */
+    box-sizing: border-box;
+  }
+  
+  /* Keep .logViewContainer styles, but remove negative margins */
+  .logViewContainer {
+    background-color: #ffffff;
+    padding: 1.5rem 2rem;
+    border-radius: 8px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+    border: 1px solid #e0e0e0;
+    margin-bottom: 2rem; /* Keep bottom margin */
+    /* No negative margins needed here */
+    max-width: 1600px; /* Or desired max-width */
+    margin-left: auto;  /* Center it if max-width is less than 100% */
+    margin-right: auto; /* Center it */
+  }
+  
+
+.logViewContainer h2 {
+    margin-top: 0;
+    margin-bottom: 0.5rem;
+    color: #2c3e50;
+}
+.logViewContainer p small {
+    color: #666;
+    font-size: 0.9em;
+    display: block;
+    margin-bottom: 1.5rem;
+}
+
+.logSearchContainer {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    align-items: center;
+}
+
+.logSearchInput {
+    flex-grow: 1;
+    padding: 0.7rem 1rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 1rem;
+}
+.logSearchInput:focus {
+    outline: none;
+    border-color: #3498db;
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.25);
+}
+
+.refreshLogButton {
+    padding: 0.7rem 1.2rem;
+    background-color: #5dade2; /* Lighter blue */
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    transition: background-color 0.2s;
+}
+.refreshLogButton:hover {
+    background-color: #3498db;
+}
+.refreshLogButton:disabled {
+    background-color: #aed6f1;
+    cursor: not-allowed;
+}
+
+.logDisplayArea {
+    background-color: #2b303b; /* Dark background for logs */
+    color: #c0c5ce; /* Light grey text */
+    padding: 1rem;
+    border-radius: 5px;
+    max-height: 60vh; /* Limit height */
+    overflow-y: auto; /* Enable scrolling */
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 0.9em;
+    line-height: 1.6;
+}
+
+.logLine {
+    margin: 0;
+    padding: 0.1rem 0; /* Minimal vertical padding */
+    white-space: pre-wrap; /* Wrap long lines */
+    word-break: break-all; /* Break long words/tokens */
+    border-bottom: 1px solid #3f444f; /* Subtle separator */
+}
+.logLine:last-child {
+    border-bottom: none;
+}
+
+.noLogsMessage {
+    color: #aaa;
+    text-align: center;
+    padding: 2rem;
+}
+
+/* Log Highlighting */
+.logLine span { /* Base span style if needed */
+   font-weight: bold;
+}
+.logHighlightError { color: #ff6b6b; /* Bright Red */ }
+.logHighlightWarning { color: #feca57; /* Yellow/Orange */ }
+.logHighlightInfo { color: #48dbfb; /* Cyan */ }
+.logHighlightDebug { color: #54a0ff; /* Blue */ }

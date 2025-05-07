@@ -1,9 +1,20 @@
 "use client"
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import styles from '../../styles/Admin.module.css';
 import * as authService from '../../services/auth'; // Assuming auth.js is correctly imported
+
+const highlightLogLine = (line) => {
+  // Simple replacements for common keywords
+  return line
+      .replace(/ERROR/g, `<span class="${styles.logHighlightError}">ERROR</span>`)
+      .replace(/WARNING/g, `<span class="${styles.logHighlightWarning}">WARNING</span>`)
+      .replace(/INFO/g, `<span class="${styles.logHighlightInfo}">INFO</span>`)
+      .replace(/DEBUG/g, `<span class="${styles.logHighlightDebug}">DEBUG</span>`);
+};
+
+const MAX_LOG_LINES = 1000;
 
 export default function AdminPage() {
   const router = useRouter();
@@ -28,6 +39,8 @@ export default function AdminPage() {
   const [selectedStoryType, setSelectedStoryType] = useState(null); // NEW: For editing
   const [allAvailablePrompts, setAllAvailablePrompts] = useState([]); // NEW: For assignment dropdown
   const [selectedPrompt, setSelectedPrompt] = useState(null);
+  const [logLines, setLogLines] = useState([]); // NEW: For logs
+  const [logSearchTerm, setLogSearchTerm] = useState('');
 
   // --- Form State ---
   const [baseStoryForm, setBaseStoryForm] = useState({
@@ -77,13 +90,27 @@ export default function AdminPage() {
           loadStoryTypes();
       } else if (activeView === 'promptList') { // <-- ADDED
         loadAllPrompts();
-     }
+     } else if (activeView === 'logs') { loadLogs(); }
     } else {
       router.push('/'); // Redirect if not admin
     }
   }, [router, activeView]); // Re-run if activeView changes to load correct data
 
   // --- Data Loading Functions ---
+
+  async function loadLogs() {
+    if (!adminCredentials) return;
+    setIsLoading(true); setError(null);
+    try {
+        const logData = await authService.adminGetLogs(adminCredentials);
+        setLogLines(logData.lines || []); // Ensure it's an array
+    } catch (err) {
+        setError(`Failed to load logs: ${err.message}`);
+        setLogLines([`Error loading logs: ${err.message}`]); // Show error in log view
+    } finally {
+        setIsLoading(false);
+    }
+}
 
   async function loadBaseStories() {
     if (!adminCredentials) return;
@@ -147,6 +174,29 @@ export default function AdminPage() {
         setIsLoading(false);
     }
 }
+
+const handleLogSearchChange = (e) => {
+  setLogSearchTerm(e.target.value);
+};
+
+const navigateToLogs = () => {
+  setActiveView('logs');
+  setLogLines([]); // Clear previous logs
+  setLogSearchTerm(''); // Reset search
+  // loadLogs will be triggered by useEffect
+};
+
+// --- Filtering and Memoization for Logs ---
+const filteredLogLines = useMemo(() => {
+   if (!logSearchTerm) {
+       return logLines; // Return all lines if no search term
+   }
+   const lowerCaseSearch = logSearchTerm.toLowerCase();
+   return logLines.filter(line =>
+       line.toLowerCase().includes(lowerCaseSearch)
+   );
+}, [logLines, logSearchTerm]); // Recalculate only when logs or search term change
+
 
 async function handleUpdatePrompt(e) {
   e.preventDefault();
@@ -547,10 +597,57 @@ const handleDeletePrompt = async (promptId, promptName) => {
           <button className={`${styles.navButton} ${activeView === 'storyTypesList' ? styles.active : ''}`} onClick={navigateToStoryTypes}>Story Types</button>
           {/* Prompt Nav */}
           <button className={`${styles.navButton} ${activeView === 'promptList' ? styles.active : ''}`} onClick={navigateToPromptList}>Manage Prompts</button> {/* Renamed */}
+          <button className={`${styles.navButton} ${activeView === 'logs' ? styles.active : ''}`} onClick={navigateToLogs}>View Logs</button>
           {/* Logout */}
           <button className={styles.logoutButton} onClick={() => { authService.logout(); router.push('/'); }}>Logout</button>
         </div>
       </header>
+
+      {/* Conditional rendering OUTSIDE adminMain for logs */}
+      {activeView === 'logs' && (
+          <div className={styles.logViewFullWidthWrapper}> {/* Optional wrapper */}
+              {/* Loading/Error/Success Messages can be here or inside */}
+              {isLoading && <div className={styles.loading}>Loading...</div>}
+              {error && <div className={styles.errorMessage}><p>{error}</p><button onClick={() => setError(null)}>Dismiss</button></div>}
+              {successMessage && <div className={styles.successMessage}><p>{successMessage}</p></div>}
+
+              <div className={styles.logViewContainer}>
+              <h2>Application Logs</h2>
+                <p><small>Showing last {logLines.length} lines (max {MAX_LOG_LINES}) from output.log. Filtering is case-insensitive.</small></p>
+
+                <div className={styles.logSearchContainer}>
+                    <input
+                        type="text"
+                        placeholder="Search logs..."
+                        value={logSearchTerm}
+                        onChange={handleLogSearchChange}
+                        className={styles.logSearchInput}
+                    />
+                     <button onClick={loadLogs} disabled={isLoading} className={styles.refreshLogButton}>
+                        Refresh Logs
+                    </button>
+                </div>
+
+                <div className={styles.logDisplayArea}>
+                    {filteredLogLines.length > 0 ? (
+                        filteredLogLines.map((line, index) => (
+                            <pre
+                                key={index}
+                                className={styles.logLine}
+                                // Use dangerouslySetInnerHTML for basic HTML highlighting
+                                // Be cautious if log content could ever contain untrusted HTML
+                                dangerouslySetInnerHTML={{ __html: highlightLogLine(line) }}
+                            />
+                        ))
+                    ) : (
+                        <p className={styles.noLogsMessage}>
+                            {logSearchTerm ? 'No log lines match your search term.' : 'No log lines loaded or log file is empty.'}
+                        </p>
+                    )}
+                </div>
+              </div>
+          </div>
+      )}
 
       <main className={styles.adminMain}>
         {/* Loading/Error/Success Messages */}
