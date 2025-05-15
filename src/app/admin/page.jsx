@@ -85,7 +85,6 @@ export default function AdminPage() {
       // Load initial data based on default view
       if (activeView === 'baseStories') {
           loadBaseStories();
-          loadStoryTypes(); // Load types for dropdowns later
       } else if (activeView === 'storyTypesList') {
           loadStoryTypes();
       } else if (activeView === 'promptList') { // <-- ADDED
@@ -95,6 +94,7 @@ export default function AdminPage() {
       router.push('/'); // Redirect if not admin
     }
   }, [router, activeView]); // Re-run if activeView changes to load correct data
+
 
   // --- Data Loading Functions ---
 
@@ -116,7 +116,7 @@ export default function AdminPage() {
     if (!adminCredentials) return;
     setIsLoading(true); setError(null);
     try {
-      const stories = await authService.getBaseStories(); // Assumes this returns enough info
+      const stories = await authService.getBaseStories(false); // Assumes this returns enough info
       setBaseStories(stories);
     } catch (err) { setError(`Failed to load base stories: ${err.message}`); }
     finally { setIsLoading(false); }
@@ -575,6 +575,37 @@ const handleDeletePrompt = async (promptId, promptName) => {
     loadAllPrompts(); // Load/refresh the list
 };
 
+async function handleToggleStoryActive(storyId, currentActiveStatus) {
+  if (!adminCredentials) return;
+
+  // Optimistic UI update: find story and toggle locally first
+  const originalStories = [...baseStories]; // Keep a copy for potential revert
+  setBaseStories(prevStories =>
+    prevStories.map(story =>
+      story.id === storyId ? { ...story, is_active: !currentActiveStatus } : story
+    )
+  );
+
+  // No need for setIsLoading(true) for an optimistic update,
+  // but you might want a specific loading state for the button itself.
+  // Let's keep it simple for now.
+  setError(null); setSuccessMessage(null);
+
+  try {
+    await authService.adminToggleBaseStory(storyId, !currentActiveStatus, adminCredentials);
+    setSuccessMessage(`Story "${originalStories.find(s => s.id === storyId)?.title || storyId}" status updated successfully!`);
+    // No need to call loadBaseStories() again due to optimistic update,
+    // unless you want to ensure data consistency from server.
+    // loadBaseStories(); // Optional: Re-fetch to confirm
+    setTimeout(() => setSuccessMessage(null), 2500);
+  } catch (err) {
+    setError(`Failed to update story status: ${err.message}`);
+    // Revert optimistic update on error
+    setBaseStories(originalStories);
+  }
+  // No finally setIsLoading(false) as we didn't set it.
+}
+
   // --- Render Logic ---
   if (!isAuthenticated || !isAdmin) {
     return <div className={styles.loading}>Checking credentials...</div>;
@@ -671,7 +702,13 @@ const handleDeletePrompt = async (promptId, promptName) => {
                            <p className={styles.storyMeta}>Language: {story.language} <span className={`${styles.activeStatus} ${story.is_active ? styles.active : styles.inactive}`}>{story.is_active ? 'Active' : 'Inactive'}</span></p>
                            <div className={styles.storyActions}>
                              <button className={styles.editButton} onClick={() => loadBaseStoryDetails(story.id)}>Edit</button>
-                             {/* ... other buttons like toggle active ... */}
+                             <button
+                                className={`${styles.toggleButton} ${story.is_active ? styles.deactivate : styles.activate}`}
+                                onClick={() => handleToggleStoryActive(story.id, story.is_active)}
+                                disabled={isLoading}
+                             >
+                                {story.is_active ? 'Deactivate' : 'Activate'}
+                             </button>
                            </div>
                          </div>
                        ))}

@@ -374,7 +374,7 @@ async def admin_delete_base_story_endpoint(story_id: str):
     except Exception as e: logger.exception(f"API Error: Unexpected error deleting base story {story_id}."); raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"An unexpected error occurred: {str(e)}")
 
 
-@router.put("/toggle-base-story/{story_id}", response_model=Dict[str, Any])
+@router.put("/toggle-base-story/{story_id}")
 async def admin_toggle_base_story(story_id: str, active: bool = Body(..., embed=True)): # Get active from body
     """Toggles a base story's active status (admin only)"""
     # ... (keep existing implementation) ...

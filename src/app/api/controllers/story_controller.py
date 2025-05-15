@@ -114,10 +114,10 @@ router = APIRouter()
 
 # GET /base-stories (No change needed structurally)
 @router.get("/base-stories", response_model=List[Dict[str, Any]])
-async def get_available_base_stories():
+async def get_available_base_stories(active_only: bool):
     """Returns a list of available base stories that users can start from"""
     try:
-        base_stories = get_all_base_stories()
+        base_stories = get_all_base_stories(active_only)
         formatted_stories = []
         for story in base_stories:
             # Optionally fetch story_type name if needed here

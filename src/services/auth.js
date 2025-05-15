@@ -73,8 +73,8 @@ async function apiCall(endpoint, method = 'GET', data = null, auth = null) {
 
 // --- Base Story & User Story Functions ---
 
-export async function getBaseStories() {
-  return apiCall('/base-stories');
+export async function getBaseStories(active_only=true) {
+  return apiCall(`/base-stories?active_only=${active_only}`);
 }
 
 export async function createStory(userId, baseStoryId, title = null) {
@@ -134,7 +134,7 @@ export async function adminUpdateBaseStory(storyId, storyData, auth) {
 
 export async function adminToggleBaseStory(storyId, active, auth) {
   // Use PUT, pass data (if any needed beyond query param) and auth
-  return apiCall(`/admin/toggle-base-story/${storyId}?active=${active}`, 'PUT', {}, auth);
+  return apiCall(`/admin/toggle-base-story/${storyId}?active=${active}`, 'PUT', {"active":active}, auth);
 }
 
 export async function adminDeleteBaseStory(storyId, auth) {

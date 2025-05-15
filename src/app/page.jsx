@@ -61,9 +61,22 @@ const AVAILABLE_MODELS = {
     { id: "microsoft/mai-ds-r1:free", name: "Microsoft MAI DS R1" },
     { id: "nvidia/llama-3.1-nemotron-ultra-253b-v1:free", name: "Nvidia Nemotron 253b" },
     { id: "google/gemini-2.5-flash-preview", name: "!!ACHTUNG KOSTET GELD!!! Gemini 2.5 Flash" },
+    { id: "google/gemini-2.0-flash-lite", name: "!!ACHTUNG KOSTET GELD!!! Gemini 2.0 Flash LITE" },
+    { id: "google/gemini-2.0-flash", name: "!!ACHTUNG KOSTET GELD!!! Gemini 2.0 Flash" },
+    { id: "openai/gpt-4o-mini", name: "!!ACHTUNG KOSTET GELD!!! GPT 4o mini" },
+    { id: "openai/gpt-4.1-mini", name: "!!ACHTUNG KOSTET GELD!!! GPT 4.1 mini" },
+    { id: "openai/gpt-4.1-nano", name: "!!ACHTUNG KOSTET GELD!!! GPT 4.1 nano" },
     
+    
+    
+    
+    { id: "mmistral-nemo-12b-arliai-rpmax-v1.3", name: "LOKAL Nemo 12b RP" },
     { id: "mistral-small-22b-arliai-rpmax-v1.1", name: "LOKAL Mistral Small 22b RP" },
     { id: "mistral-small-24b-arliai-rpmax-v1.4", name: "LOKAL Mistral Small 24b RP" },
+    { id: "gryphe_pantheon-rp-1.8-24b-small-3.1", name: "LOKAL Gryphe Pantheon RP" },
+    
+    { id: "r1-8b-arliai-rpr-v2", name: "LOKAL R1 8b RP" },
+    
     { id: "golden-curry-12b-i1", name: "LOKAL Golden Curry RP" },
     
   ],

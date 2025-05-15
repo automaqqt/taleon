@@ -217,7 +217,7 @@ Provide ONLY the updated summary text as requested in the system prompt."""
                 if type(new_value) is not list:
                     if new_value not in IGNORE_SCALAR_VALUES:
                         updated_context[key] = new_value
-                        logger.debug(f"  Added new key '{key}' with value type {type(new_value)}.")
+                        logger.debug(f"  Added new key '{key}' with value type {new_value}.")
                     else:
                         logger.debug(f"  Skipped adding new key '{key}' due to ignorable value: {new_value!r}")
                 else:
@@ -238,7 +238,7 @@ Provide ONLY the updated summary text as requested in the system prompt."""
                     if new_value not in IGNORE_SCALAR_VALUES:
                         if existing_value != new_value:
                              updated_context[key] = new_value
-                             logger.debug(f"  Replaced value for key '{key}' (Old type: {type(existing_value)}, New type: {type(new_value)}).")
+                             logger.debug(f"  Replaced value for key '{key}' (Old : {existing_value}, New : {new_value}).")
                         else:
                             logger.debug(f"  Value for key '{key}' is the same. No change.")
                     else:
