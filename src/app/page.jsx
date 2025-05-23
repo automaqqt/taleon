@@ -61,6 +61,7 @@ const AVAILABLE_MODELS = {
     { id: "microsoft/mai-ds-r1:free", name: "Microsoft MAI DS R1" },
     { id: "nvidia/llama-3.1-nemotron-ultra-253b-v1:free", name: "Nvidia Nemotron 253b" },
     { id: "google/gemini-2.5-flash-preview", name: "!!ACHTUNG KOSTET GELD!!! Gemini 2.5 Flash" },
+    { id: "google/gemini-2.5-flash-preview-05-20", name: "!!ACHTUNG KOSTET GELD!!! Gemini 2.5 Flash 20/5" },
     { id: "google/gemini-2.0-flash-lite-001", name: "!!ACHTUNG KOSTET GELD!!! Gemini 2.0 Flash LITE" },
     { id: "google/gemini-2.0-flash-001", name: "!!ACHTUNG KOSTET GELD!!! Gemini 2.0 Flash" },
     { id: "openai/gpt-4o-mini", name: "!!ACHTUNG KOSTET GELD!!! GPT 4o mini" },
@@ -208,7 +209,7 @@ const AnimatedWords = ({ text }) => {
 export default function HomePage() {
   const router = useRouter();
   const windowWidth = useWindowWidth(); // Use the hook
-  const isMobileLayout = windowWidth <= 1200;
+  const isMobileLayout = windowWidth <= 1000;
 
   // --- Authentication State ---
   const [isAuthenticated, setIsAuthenticated] = useState(false);

@@ -756,7 +756,7 @@
 
 
 /* --- Responsive --- */
-@media (max-width: 1200px) {
+@media (max-width: 1000px) {
   .bookContainer.withDebugPanel {
     margin-right: 0; /* Stack debug panel below */
   }
